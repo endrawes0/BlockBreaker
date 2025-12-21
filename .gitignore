@@ -1,0 +1,12 @@
+# Godot
+.godot/
+.import/
+.export/
+.export-presets.cfg
+
+# Mono
+.mono/
+
+# OS
+.DS_Store
+Thumbs.db

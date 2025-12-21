@@ -1,0 +1,70 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/Brick.gd" id=1]
+
+[sub_resource type="RectangleShape2D" id=1]
+size = Vector2(64, 24)
+
+[node name="Brick" type="StaticBody2D"]
+script = ExtResource("1")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("1")
+
+[node name="Rect" type="ColorRect" parent="."]
+position = Vector2(-32, -12)
+size = Vector2(64, 24)
+color = Color(0.86, 0.32, 0.26, 1)
+
+[node name="HpLabel" type="Label" parent="Rect"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "1"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="CurseLabel" type="Label" parent="Rect"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "🗡"
+theme_override_font_sizes/font_size = 18
+horizontal_alignment = 2
+vertical_alignment = 2
+visible = false
+
+[node name="RegenLabel" type="Label" parent="Rect"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "↻"
+horizontal_alignment = 0
+vertical_alignment = 0
+visible = false
+
+[node name="ShieldLeft" type="ColorRect" parent="Rect"]
+position = Vector2(0, 0)
+size = Vector2(4, 24)
+color = Color(0.78, 0.80, 0.85, 1)
+
+[node name="ShieldRight" type="ColorRect" parent="Rect"]
+position = Vector2(60, 0)
+size = Vector2(4, 24)
+color = Color(0.78, 0.80, 0.85, 1)
+
+[node name="ShieldTop" type="ColorRect" parent="Rect"]
+position = Vector2(0, 0)
+size = Vector2(64, 4)
+color = Color(0.78, 0.80, 0.85, 1)
+
+[node name="ShieldBottom" type="ColorRect" parent="Rect"]
+position = Vector2(0, 20)
+size = Vector2(64, 4)
+color = Color(0.78, 0.80, 0.85, 1)
