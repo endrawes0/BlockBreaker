@@ -150,6 +150,8 @@ var deck_return_info: String = ""
 
 func _ready() -> void:
 	randomize()
+	if get_viewport():
+		get_viewport().size_changed.connect(_fit_to_viewport)
 	_fit_to_viewport()
 	base_paddle_half_width = paddle.half_width
 	base_paddle_speed = paddle.speed
@@ -652,6 +654,7 @@ func on_menu_closed() -> void:
 		if node:
 			node.visible = true
 	process_mode = Node.PROCESS_MODE_INHERIT
+	_fit_to_viewport()
 
 func _hide_all_panels() -> void:
 	if map_panel:
