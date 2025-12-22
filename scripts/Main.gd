@@ -92,6 +92,7 @@ const CARD_POOL: Array[String] = [
 @onready var gameover_label: Label = $HUD/GameOverPanel/GameOverLabel
 @onready var restart_button: Button = $HUD/GameOverPanel/RestartButton
 @onready var menu_button: Button = $HUD/GameOverPanel/MenuButton
+@onready var forfeit_dialog: ConfirmationDialog = $HUD/ForfeitDialog
 @onready var left_wall: CollisionShape2D = $Walls/LeftWall
 @onready var right_wall: CollisionShape2D = $Walls/RightWall
 @onready var top_wall: CollisionShape2D = $Walls/TopWall
@@ -148,6 +149,13 @@ var encounter_speed_boost: bool = false
 var deck_return_panel: String = ""
 var deck_return_info: String = ""
 
+func _update_reserve_indicator() -> void:
+	if paddle and paddle.has_method("set_reserve_count"):
+		if state == GameState.PLANNING:
+			paddle.set_reserve_count(volley_ball_bonus)
+		else:
+			paddle.set_reserve_count(volley_ball_reserve)
+
 func _ready() -> void:
 	randomize()
 	if get_viewport():
@@ -160,6 +168,8 @@ func _ready() -> void:
 		restart_button.pressed.connect(_start_run)
 	if menu_button:
 		menu_button.pressed.connect(_go_to_menu)
+	if forfeit_dialog:
+		forfeit_dialog.confirmed.connect(_confirm_forfeit_volley)
 	if deck_button:
 		deck_button.pressed.connect(_show_deck_panel)
 	if deck_close_button:
@@ -247,11 +257,21 @@ func _set_hud_tooltips() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
 		App.show_menu()
+	if event is InputEventKey and event.is_pressed() and not event.is_echo():
+		var key_event: InputEventKey = event
+		if key_event.keycode in [KEY_ENTER, KEY_KP_ENTER]:
+			if state == GameState.VOLLEY and active_balls.is_empty() and volley_ball_reserve > 0:
+				_prompt_forfeit_volley()
+				return
 	if state == GameState.PLANNING and event.is_action_pressed("ui_accept"):
 		_launch_volley()
 	if state == GameState.VOLLEY and event.is_action_pressed("ui_select") and active_balls.is_empty() and volley_ball_reserve > 0:
-		_forfeit_volley()
+		_prompt_forfeit_volley()
 	if state == GameState.VOLLEY and event.is_action_pressed("ui_accept") and reserve_launch_cooldown <= 0.0:
+		if event is InputEventKey:
+			var launch_key: InputEventKey = event
+			if launch_key.keycode in [KEY_ENTER, KEY_KP_ENTER]:
+				return
 		_launch_reserve_ball()
 	if state == GameState.PLANNING and event.is_action_pressed("ui_select"):
 		_end_turn()
@@ -418,6 +438,7 @@ func _start_turn() -> void:
 	volley_damage_bonus = 0
 	volley_ball_bonus = 0
 	volley_ball_reserve = 0
+	_update_reserve_indicator()
 	volley_piercing = false
 	volley_ball_speed_multiplier = 1.0
 	_apply_paddle_buffs()
@@ -444,6 +465,7 @@ func _launch_volley() -> void:
 	state = GameState.VOLLEY
 	var total_balls: int = 1 + volley_ball_bonus
 	volley_ball_reserve = max(0, total_balls - 1)
+	_update_reserve_indicator()
 	reserve_launch_cooldown = 0.1
 	_spawn_volley_ball()
 	info_label.text = "Volley in motion."
@@ -454,6 +476,7 @@ func _launch_reserve_ball() -> void:
 	if volley_ball_reserve <= 0:
 		return
 	volley_ball_reserve -= 1
+	_update_reserve_indicator()
 	_spawn_volley_ball()
 	info_label.text = "Extra ball launched."
 
@@ -499,7 +522,17 @@ func _forfeit_volley() -> void:
 	if volley_ball_reserve <= 0:
 		return
 	volley_ball_reserve = 0
+	_update_reserve_indicator()
 	_apply_volley_threat()
+
+func _prompt_forfeit_volley() -> void:
+	if forfeit_dialog == null:
+		_forfeit_volley()
+		return
+	forfeit_dialog.popup_centered()
+
+func _confirm_forfeit_volley() -> void:
+	_forfeit_volley()
 
 func _apply_volley_threat() -> void:
 	var threat: int = _calculate_threat()
@@ -713,6 +746,7 @@ func _clear_active_balls() -> void:
 			ball.queue_free()
 	active_balls.clear()
 	volley_ball_reserve = 0
+	_update_reserve_indicator()
 
 func _build_bricks(rows: int, cols: int, base_hp: int, pattern: String) -> void:
 	for child in bricks_root.get_children():
@@ -886,6 +920,7 @@ func _play_card(card_id: String) -> void:
 	discard_pile.append(card_id)
 	hand.erase(card_id)
 	_refresh_hand()
+	_update_reserve_indicator()
 	_update_labels()
 
 func _apply_card_effect(card_id: String) -> void:
