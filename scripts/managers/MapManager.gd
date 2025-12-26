@@ -33,12 +33,12 @@ func _fallback_choices(floor_index: int, max_combat_floors: int) -> Array[String
 	if floor_index >= max_combat_floors:
 		return ["boss"]
 	var pool: Array[String] = ["combat", "combat", "combat", "rest", "shop", "elite"]
-	var first_choice := pool.pick_random()
+	var first_choice: String = pool.pick_random()
 	var filtered_pool: Array[String] = []
 	for entry in pool:
 		if entry != first_choice:
 			filtered_pool.append(entry)
-	var second_choice := first_choice
+	var second_choice: String = first_choice
 	if not filtered_pool.is_empty():
 		second_choice = filtered_pool.pick_random()
 	return [first_choice, second_choice]
