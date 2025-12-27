@@ -72,13 +72,7 @@ const BALANCE_DATA_PATH: String = "res://data/balance/basic.tres"
 
 var brick_scene: PackedScene = preload("res://scenes/Brick.tscn")
 var ball_scene: PackedScene = preload("res://scenes/Ball.tscn")
-var card_art_textures: Dictionary = {
-	"punch": preload("res://assets/cards/punch.png"),
-	"twin": preload("res://assets/cards/twin.png"),
-	"guard": preload("res://assets/cards/guard.png"),
-	"rally": preload("res://assets/cards/rally.png"),
-	"wound": preload("res://assets/cards/wound.png")
-}
+var card_art_textures: Dictionary = {}
 
 var encounter_manager: EncounterManager
 var map_manager: MapManager
@@ -230,6 +224,15 @@ func _apply_balance_data(data: Resource) -> void:
 	shop_vitality_price = data.shop_vitality_price
 	shop_vitality_max_hp_bonus = data.shop_vitality_max_hp_bonus
 	shop_vitality_heal = data.shop_vitality_heal
+	card_art_textures.clear()
+	for card_id in card_data.keys():
+		var entry: Dictionary = card_data[card_id]
+		var art_path: String = String(entry.get("art_path", ""))
+		if art_path.is_empty():
+			continue
+		var texture := load(art_path)
+		if texture:
+			card_art_textures[card_id] = texture
 
 func _fit_to_viewport() -> void:
 	var size: Vector2 = get_viewport_rect().size
