@@ -299,6 +299,8 @@ func _set_hud_tooltips() -> void:
 	floor_label.tooltip_text = "Current room in the run."
 	info_label.mouse_filter = Control.MOUSE_FILTER_STOP
 	info_label.tooltip_text = "Status and prompts for the current room."
+	if mods_persist_checkbox:
+		mods_persist_checkbox.tooltip_text = "Re-apply after use (while available)."
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
@@ -381,9 +383,6 @@ func _apply_persist_checkbox_style() -> void:
 	var checked_tex := ImageTexture.create_from_image(checked)
 	mods_persist_checkbox.add_theme_icon_override("unchecked", unchecked_tex)
 	mods_persist_checkbox.add_theme_icon_override("checked", checked_tex)
-	info_label.text = "Re-apply after use (while available)."
-	_build_map_buttons()
-	_update_labels()
 
 func _build_map_buttons() -> void:
 	for child in map_buttons.get_children():
