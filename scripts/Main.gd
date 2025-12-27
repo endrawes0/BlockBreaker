@@ -22,6 +22,8 @@ const BALL_SPAWN_OFFSET: Vector2 = Vector2(0, -32)
 const ENCOUNTER_CONFIG_DIR: String = "res://data/encounters"
 const FLOOR_PLAN_PATH: String = "res://data/floor_plans/basic.tres"
 const FLOOR_PLAN_GENERATOR_CONFIG_PATH: String = "res://data/floor_plans/generator_config.tres"
+const FLOOR_PLAN_GENERATOR := preload("res://scripts/data/FloorPlanGenerator.gd")
+const FLOOR_PLAN_GENERATOR_CONFIG := preload("res://scripts/data/FloorPlanGeneratorConfig.gd")
 const BALANCE_DATA_PATH: String = "res://data/balance/basic.tres"
 
 @export var brick_size: Vector2 = Vector2(64, 24)
@@ -74,7 +76,7 @@ const BALANCE_DATA_PATH: String = "res://data/balance/basic.tres"
 var brick_scene: PackedScene = preload("res://scenes/Brick.tscn")
 var ball_scene: PackedScene = preload("res://scenes/Ball.tscn")
 var card_art_textures: Dictionary = {}
-var floor_plan_generator_config: FloorPlanGeneratorConfig
+var floor_plan_generator_config: Resource
 
 var encounter_manager: EncounterManager
 var map_manager: MapManager
@@ -167,7 +169,7 @@ func _ready() -> void:
 	if floor_plan_resource != null:
 		map_manager.floor_plan = floor_plan_resource
 	var generator_config_resource := load(FLOOR_PLAN_GENERATOR_CONFIG_PATH)
-	if generator_config_resource is FloorPlanGeneratorConfig:
+	if generator_config_resource is FLOOR_PLAN_GENERATOR_CONFIG:
 		floor_plan_generator_config = generator_config_resource
 	deck_manager = DeckManager.new()
 	add_child(deck_manager)
@@ -367,7 +369,7 @@ func _show_map() -> void:
 func _generate_floor_plan_if_needed() -> void:
 	if floor_plan_generator_config == null or not floor_plan_generator_config.enabled:
 		return
-	var generator := FloorPlanGenerator.new()
+	var generator := FLOOR_PLAN_GENERATOR.new()
 	var plan := generator.generate(floor_plan_generator_config)
 	if plan.is_empty():
 		return
