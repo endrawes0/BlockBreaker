@@ -381,9 +381,6 @@ func _apply_persist_checkbox_style() -> void:
 	var checked_tex := ImageTexture.create_from_image(checked)
 	mods_persist_checkbox.add_theme_icon_override("unchecked", unchecked_tex)
 	mods_persist_checkbox.add_theme_icon_override("checked", checked_tex)
-	info_label.text = "Re-apply after use (while available)."
-	_build_map_buttons()
-	_update_labels()
 
 func _build_map_buttons() -> void:
 	for child in map_buttons.get_children():
