@@ -5,16 +5,28 @@ class_name MapManager
 
 var current_room_id: String = ""
 var fallback_active: bool = false
+var runtime_rooms: Array[Dictionary] = []
+var runtime_start_room_id: String = ""
+var runtime_seed: int = 0
 
 func reset_run() -> void:
 	current_room_id = ""
 	fallback_active = false
-	_validate_floor_plan()
+	_validate_active_floor_plan()
+
+func set_runtime_floor_plan(plan: Dictionary) -> void:
+	runtime_rooms = plan.get("rooms", [])
+	runtime_start_room_id = String(plan.get("start_room_id", ""))
+	runtime_seed = int(plan.get("seed", 0))
+	current_room_id = ""
+	fallback_active = false
+	_validate_active_floor_plan()
 
 func get_start_room_choice() -> Dictionary:
-	if floor_plan == null:
+	var start_id := _active_start_room_id()
+	if start_id == "":
 		return {}
-	var start_room := _find_room(floor_plan.start_room_id)
+	var start_room := _find_room(start_id)
 	if start_room.is_empty():
 		return {}
 	return {
@@ -23,8 +35,8 @@ func get_start_room_choice() -> Dictionary:
 	}
 
 func build_room_choices(floor_index: int, max_combat_floors: int) -> Array[Dictionary]:
-	if floor_plan != null and floor_plan.rooms.size() > 0 and not fallback_active:
-		return _choices_from_floor_plan(floor_index, max_combat_floors)
+	if _has_active_floor_plan() and not fallback_active:
+		return _choices_from_active_plan(floor_index, max_combat_floors)
 	return _fallback_choices(floor_index, max_combat_floors)
 
 func advance_to_room(room_id: String) -> void:
@@ -48,9 +60,9 @@ func room_label(room_type: String) -> String:
 		_:
 			return "???"
 
-func _choices_from_floor_plan(floor_index: int, max_combat_floors: int) -> Array[Dictionary]:
+func _choices_from_active_plan(floor_index: int, max_combat_floors: int) -> Array[Dictionary]:
 	if current_room_id == "":
-		current_room_id = floor_plan.start_room_id
+		current_room_id = _active_start_room_id()
 	var current_room := _find_room(current_room_id)
 	if current_room.is_empty():
 		push_warning("Floor plan missing room id '%s'. Falling back to random choices." % current_room_id)
@@ -95,20 +107,23 @@ func _fallback_choices(floor_index: int, max_combat_floors: int) -> Array[Dictio
 	]
 
 func _find_room(room_id: String) -> Dictionary:
-	if floor_plan == null:
+	var rooms := _active_rooms()
+	if rooms.is_empty():
 		return {}
-	for room in floor_plan.rooms:
+	for room in rooms:
 		if String(room.get("id", "")) == room_id:
 			return room
 	return {}
 
-func _validate_floor_plan() -> void:
-	if floor_plan == null:
+func _validate_active_floor_plan() -> void:
+	var rooms := _active_rooms()
+	if rooms.is_empty():
 		return
-	if floor_plan.start_room_id == "":
+	var start_room_id := _active_start_room_id()
+	if start_room_id == "":
 		push_warning("Floor plan start_room_id is empty.")
 	var seen: Dictionary = {}
-	for room in floor_plan.rooms:
+	for room in rooms:
 		var room_id := String(room.get("id", ""))
 		if room_id == "":
 			push_warning("Floor plan contains a room without an id.")
@@ -116,10 +131,29 @@ func _validate_floor_plan() -> void:
 		if seen.has(room_id):
 			push_warning("Floor plan contains duplicate room id '%s'." % room_id)
 		seen[room_id] = true
-	if floor_plan.start_room_id != "" and not seen.has(floor_plan.start_room_id):
-		push_warning("Floor plan start_room_id '%s' not found in rooms." % floor_plan.start_room_id)
-	for room in floor_plan.rooms:
+	if start_room_id != "" and not seen.has(start_room_id):
+		push_warning("Floor plan start_room_id '%s' not found in rooms." % start_room_id)
+	for room in rooms:
 		var room_id := String(room.get("id", ""))
 		for next_id in room.get("next", []):
 			if not seen.has(String(next_id)):
 				push_warning("Floor plan room '%s' references missing next id '%s'." % [room_id, String(next_id)])
+
+func _active_rooms() -> Array[Dictionary]:
+	if not runtime_rooms.is_empty():
+		return runtime_rooms
+	if floor_plan != null:
+		return floor_plan.rooms
+	return []
+
+func _active_start_room_id() -> String:
+	if not runtime_rooms.is_empty():
+		return runtime_start_room_id
+	if floor_plan != null:
+		return floor_plan.start_room_id
+	return ""
+
+func _has_active_floor_plan() -> bool:
+	if not runtime_rooms.is_empty():
+		return true
+	return floor_plan != null and floor_plan.rooms.size() > 0
