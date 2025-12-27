@@ -347,13 +347,19 @@ func _start_run() -> void:
 		child.queue_free()
 	deck_manager.setup(STARTING_DECK)
 	map_manager.reset_run()
-	floor_index = 1
-	_start_encounter(false)
+	var start_room := map_manager.get_start_room_choice()
+	if start_room.is_empty():
+		floor_index = 1
+		_start_encounter(false)
+		return
+	map_manager.advance_to_room(String(start_room.get("id", "")))
+	_enter_room(String(start_room.get("type", "combat")))
 
 func _show_map() -> void:
 	state = GameState.MAP
 	hud_controller.hide_all_panels()
 	map_panel.visible = true
+	_build_map_buttons()
 	var display_floor: int = min(floor_index + 1, max_floors)
 	floor_label.text = "Floor %d/%d" % [display_floor, max_floors]
 

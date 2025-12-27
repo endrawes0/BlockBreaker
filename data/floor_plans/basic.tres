@@ -8,7 +8,7 @@ start_room_id = "start"
 rooms = [
 	{
 		"id": "start",
-		"type": "start",
+		"type": "combat",
 		"next": ["c1", "c2"]
 	},
 	{
