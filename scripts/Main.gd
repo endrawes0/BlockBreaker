@@ -84,6 +84,7 @@ var floor_plan_generator_config: Resource
 var pending_seed: int = 0
 var has_pending_seed_override: bool = false
 var run_rng: RandomNumberGenerator = RandomNumberGenerator.new()
+var run_seed: int = 0
 var map_preview_active: bool = false
 var map_preview_state: int = GameState.MAP
 
@@ -239,13 +240,16 @@ func _reset_run_rng() -> void:
 	var seed_value: int = 0
 	if floor_plan_generator_config == null or not floor_plan_generator_config.enabled:
 		run_rng.randomize()
+		run_seed = 0
 		return
 	if map_manager:
 		seed_value = map_manager.runtime_seed
 	if seed_value > 0:
 		run_rng.seed = seed_value
+		run_seed = seed_value
 	else:
 		run_rng.randomize()
+		run_seed = run_rng.seed
 
 func _apply_balance_data(data: Resource) -> void:
 	card_data = data.card_data
@@ -488,13 +492,10 @@ func _generate_floor_plan_if_needed() -> void:
 func _update_seed_display() -> void:
 	if map_seed_label == null:
 		return
-	var seed_value: int = 0
-	if map_manager:
-		seed_value = map_manager.runtime_seed
-	if seed_value > 0:
-		map_seed_label.text = "Seed: %d" % seed_value
+	if run_seed > 0:
+		map_seed_label.text = "Seed: %d" % run_seed
 	elif floor_plan_generator_config != null and floor_plan_generator_config.enabled:
-		map_seed_label.text = "Seed: (random)"
+		map_seed_label.text = "Seed: (pending)"
 	else:
 		map_seed_label.text = "Seed: N/A"
 
