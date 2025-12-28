@@ -38,7 +38,19 @@ func generate(config: FloorPlanGeneratorConfig) -> Dictionary:
 		for index in range(choice_count):
 			var room_type := _pick_weighted(weights, rng)
 			var room_id := "f%d_%d" % [floor + 1, index + 1]
-			var room: Dictionary = {"id": room_id, "type": room_type, "next": []}
+			var resolved_type := room_type
+			var revealed_type := ""
+			if room_type == "mystery":
+				revealed_type = _pick_revealed_type(weights, rng)
+				resolved_type = "mystery"
+			var room: Dictionary = {
+				"id": room_id,
+				"type": resolved_type,
+				"next": []
+			}
+			if revealed_type != "":
+				room["is_mystery"] = true
+				room["revealed_type"] = revealed_type
 			room_index[room_id] = rooms.size()
 			rooms.append(room)
 			floor_ids.append(room_id)
@@ -90,7 +102,7 @@ func _sanitize_weights(weights: Dictionary) -> Dictionary:
 		if weight > 0:
 			sanitized[room_type] = weight
 	if sanitized.is_empty():
-		sanitized["combat"] = 1
+		push_error("Room weights missing or empty in generator config.")
 	return sanitized
 
 func _pick_weighted(weights: Dictionary, rng: RandomNumberGenerator) -> String:
@@ -263,3 +275,10 @@ func _apply_hidden_edges(rooms: Array[Dictionary], room_index: Dictionary, rng: 
 			next_list[0]["hidden"] = false
 		room["next"] = next_list
 		rooms[i] = room
+
+func _pick_revealed_type(weights: Dictionary, rng: RandomNumberGenerator) -> String:
+	var filtered: Dictionary = weights.duplicate()
+	filtered.erase("mystery")
+	if filtered.is_empty():
+		return "combat"
+	return _pick_weighted(filtered, rng)

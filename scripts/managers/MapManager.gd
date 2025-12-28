@@ -62,6 +62,25 @@ func advance_to_room(room_id: String) -> void:
 	if previous_room_id != "":
 		discovered_edges[_edge_key(previous_room_id, room_id)] = true
 
+func reveal_current_mystery_room() -> String:
+	if current_room_id == "":
+		return ""
+	var rooms := _active_rooms()
+	for i in range(rooms.size()):
+		var room: Dictionary = rooms[i]
+		if String(room.get("id", "")) != current_room_id:
+			continue
+		if String(room.get("type", "")) != "mystery":
+			return String(room.get("type", "combat"))
+		var revealed := String(room.get("revealed_type", "combat"))
+		room["type"] = revealed
+		room.erase("is_mystery")
+		rooms[i] = room
+		if not runtime_rooms.is_empty():
+			runtime_rooms = rooms
+		return revealed
+	return ""
+
 func room_label(room_type: String) -> String:
 	match room_type:
 		"combat":
@@ -74,6 +93,8 @@ func room_label(room_type: String) -> String:
 			return "Shop"
 		"treasure":
 			return "Treasure"
+		"mystery":
+			return "Mystery"
 		"boss":
 			return "Boss"
 		"victory":
