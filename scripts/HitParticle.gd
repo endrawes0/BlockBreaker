@@ -1,0 +1,20 @@
+extends Node2D
+
+@onready var rect: ColorRect = $Rect
+
+var velocity: Vector2 = Vector2.ZERO
+var gravity: float = 700.0
+var lifetime: float = 1.2
+
+func setup(color: Color, initial_velocity: Vector2) -> void:
+	if rect:
+		rect.color = color
+	velocity = initial_velocity
+
+func _process(delta: float) -> void:
+	lifetime -= delta
+	velocity.y += gravity * delta
+	position += velocity * delta
+	var screen := App.get_layout_size()
+	if lifetime <= 0.0 or global_position.y > screen.y + 100.0:
+		queue_free()
