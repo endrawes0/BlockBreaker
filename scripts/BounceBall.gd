@@ -1,5 +1,7 @@
 extends "res://scripts/Ball.gd"
 
+@export var paddle_path_override: NodePath
+
 func setup(color: Color, initial_velocity: Vector2) -> void:
 	if rect:
 		rect.color = color
@@ -9,10 +11,8 @@ func setup(color: Color, initial_velocity: Vector2) -> void:
 		launched = true
 
 func _ready() -> void:
-	if paddle_path == NodePath(""):
-		var paddle_node := get_tree().root.find_child("Paddle", true, false)
-		if paddle_node:
-			paddle_path = paddle_node.get_path()
+	if paddle_path_override != NodePath(""):
+		paddle_path = paddle_path_override
 	super._ready()
 
 func _reset() -> void:

@@ -166,6 +166,8 @@ func _spawn_bounce_particle() -> void:
 			particle_rng.randf_range(-420.0, -220.0)
 		)
 		particle.call("setup", rect.color, velocity)
+	if particle.has_method("set"):
+		particle.set("paddle_path_override", "Paddle")
 
 func _damage_particle_count(damage: int) -> int:
 	return clamp(6 + damage * 2, 6, 36)
