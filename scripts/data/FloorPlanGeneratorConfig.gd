@@ -15,6 +15,8 @@ class_name FloorPlanGeneratorConfig
 	"elite": 1,
 	"treasure": 1
 }
+# Chance for any generated room to become a mystery placeholder.
+@export var mystery_room_chance: float = 0.0
 # Acts can override floors/weights/choices per segment.
 # Each entry may contain: floors (int), room_weights (Dictionary), min_choices (int), max_choices (int).
 @export var acts: Array[Dictionary] = []

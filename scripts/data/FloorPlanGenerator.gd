@@ -38,7 +38,15 @@ func generate(config: FloorPlanGeneratorConfig) -> Dictionary:
 		for index in range(choice_count):
 			var room_type := _pick_weighted(weights, rng)
 			var room_id := "f%d_%d" % [floor + 1, index + 1]
-			var room: Dictionary = {"id": room_id, "type": room_type, "next": []}
+			var room: Dictionary = {
+				"id": room_id,
+				"type": room_type,
+				"next": []
+			}
+			if _should_make_mystery(room_type, rng, config):
+				room["is_mystery"] = true
+				room["revealed_type"] = room_type
+				room["type"] = "mystery"
 			room_index[room_id] = rooms.size()
 			rooms.append(room)
 			floor_ids.append(room_id)
@@ -263,3 +271,11 @@ func _apply_hidden_edges(rooms: Array[Dictionary], room_index: Dictionary, rng: 
 			next_list[0]["hidden"] = false
 		room["next"] = next_list
 		rooms[i] = room
+
+func _should_make_mystery(room_type: String, rng: RandomNumberGenerator, config: FloorPlanGeneratorConfig) -> bool:
+	if config.mystery_room_chance <= 0.0:
+		return false
+	var normalized := room_type.strip_edges().to_lower()
+	if normalized == "" or RESERVED_TYPES.has(normalized):
+		return false
+	return rng.randf() < config.mystery_room_chance

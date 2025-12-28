@@ -581,6 +581,10 @@ func _enter_room(room_type: String) -> void:
 	if room_type == "victory":
 		_show_victory()
 		return
+	if room_type == "mystery":
+		var revealed := _reveal_mystery_room()
+		_enter_room(revealed)
+		return
 	match room_type:
 		"rest":
 			_show_rest()
@@ -597,6 +601,14 @@ func _enter_room(room_type: String) -> void:
 		_:
 			floor_index += 1
 			_start_encounter(false)
+
+func _reveal_mystery_room() -> String:
+	if map_manager == null:
+		return "combat"
+	var revealed := map_manager.reveal_current_mystery_room()
+	if revealed == "":
+		revealed = "combat"
+	return revealed
 
 func _start_encounter(is_elite: bool) -> void:
 	state = GameState.PLANNING

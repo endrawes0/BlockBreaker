@@ -11,3 +11,4 @@ treasure_reward_weights = {
 "gold": 50,
 "mod": 25
 }
+mystery_room_chance = 0.2
