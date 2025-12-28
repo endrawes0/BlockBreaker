@@ -4,7 +4,7 @@ signal destroyed(brick: Node)
 signal damaged(brick: Node)
 
 const HIT_PARTICLE_SCENE := preload("res://scenes/HitParticle.tscn")
-const BOUNCE_PARTICLE_SCENE := preload("res://scenes/BounceParticle.tscn")
+const BOUNCE_BALL_SCENE := preload("res://scenes/BounceBall.tscn")
 
 @onready var rect: ColorRect = $Rect
 @onready var hp_label: Label = $Rect/HpLabel
@@ -70,13 +70,13 @@ func apply_damage_with_overkill(amount: int, normal: Vector2 = Vector2.ZERO, ign
 	var hp_before: int = hp
 	hp -= damage
 	if hp <= 0:
-		_spawn_hit_particles(12)
+		_spawn_hit_particles(_destroy_particle_count(damage))
 		_spawn_bounce_particle()
 		emit_signal("destroyed", self)
 		queue_free()
 		return max(0, damage - hp_before)
 	emit_signal("damaged", self)
-	_spawn_hit_particles(6)
+	_spawn_hit_particles(_damage_particle_count(damage))
 	_update_label()
 	return 0
 
@@ -148,12 +148,12 @@ func _spawn_hit_particles(count: int) -> void:
 func _spawn_bounce_particle() -> void:
 	if rect == null:
 		return
-	if particle_rng.randf() > 0.05:
+	if particle_rng.randf() > 0.1:
 		return
 	var parent_node := get_parent()
 	if parent_node == null:
 		return
-	var particle := BOUNCE_PARTICLE_SCENE.instantiate()
+	var particle := BOUNCE_BALL_SCENE.instantiate()
 	if particle == null:
 		return
 	parent_node.add_child(particle)
@@ -166,3 +166,9 @@ func _spawn_bounce_particle() -> void:
 			particle_rng.randf_range(-420.0, -220.0)
 		)
 		particle.call("setup", rect.color, velocity)
+
+func _damage_particle_count(damage: int) -> int:
+	return clamp(6 + damage * 2, 6, 36)
+
+func _destroy_particle_count(damage: int) -> int:
+	return clamp(12 + damage * 4, 12, 60)

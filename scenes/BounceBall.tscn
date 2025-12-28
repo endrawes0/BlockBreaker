@@ -1,11 +1,11 @@
 [gd_scene load_steps=3 format=3]
 
-[ext_resource type="Script" path="res://scripts/BounceParticle.gd" id=1]
+[ext_resource type="Script" path="res://scripts/BounceBall.gd" id=1]
 
-[sub_resource type="CircleShape2D" id=1]
-radius = 8.0
+[sub_resource type="RectangleShape2D" id=1]
+size = Vector2(16, 16)
 
-[node name="BounceParticle" type="CharacterBody2D"]
+[node name="BounceBall" type="CharacterBody2D"]
 script = ExtResource("1")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
@@ -14,4 +14,4 @@ shape = SubResource("1")
 [node name="Rect" type="ColorRect" parent="."]
 position = Vector2(-8, -8)
 size = Vector2(16, 16)
-color = Color(1, 1, 1, 1)
+color = Color(0.95, 0.95, 1, 1)
