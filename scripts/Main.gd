@@ -494,8 +494,6 @@ func _update_seed_display() -> void:
 		return
 	if run_seed > 0:
 		map_seed_label.text = "Seed: %d" % run_seed
-	elif floor_plan_generator_config != null and floor_plan_generator_config.enabled:
-		map_seed_label.text = "Seed: (pending)"
 	else:
 		map_seed_label.text = "Seed: N/A"
 
