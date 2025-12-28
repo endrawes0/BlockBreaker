@@ -21,6 +21,9 @@ const BASE_STARTING_HAND_SIZE: int = 4
 const BALL_SPAWN_OFFSET: Vector2 = Vector2(0, -32)
 const ENCOUNTER_CONFIG_DIR: String = "res://data/encounters"
 const FLOOR_PLAN_PATH: String = "res://data/floor_plans/basic.tres"
+const FLOOR_PLAN_GENERATOR_CONFIG_PATH: String = "res://data/floor_plans/generator_config.tres"
+const FLOOR_PLAN_GENERATOR := preload("res://scripts/data/FloorPlanGenerator.gd")
+const FLOOR_PLAN_GENERATOR_CONFIG := preload("res://scripts/data/FloorPlanGeneratorConfig.gd")
 const BALANCE_DATA_PATH: String = "res://data/balance/basic.tres"
 
 @export var brick_size: Vector2 = Vector2(64, 24)
@@ -73,6 +76,7 @@ const BALANCE_DATA_PATH: String = "res://data/balance/basic.tres"
 var brick_scene: PackedScene = preload("res://scenes/Brick.tscn")
 var ball_scene: PackedScene = preload("res://scenes/Ball.tscn")
 var card_art_textures: Dictionary = {}
+var floor_plan_generator_config: Resource
 
 var encounter_manager: EncounterManager
 var map_manager: MapManager
@@ -164,6 +168,9 @@ func _ready() -> void:
 	var floor_plan_resource := load(FLOOR_PLAN_PATH)
 	if floor_plan_resource != null:
 		map_manager.floor_plan = floor_plan_resource
+	var generator_config_resource := load(FLOOR_PLAN_GENERATOR_CONFIG_PATH)
+	if generator_config_resource is FLOOR_PLAN_GENERATOR_CONFIG:
+		floor_plan_generator_config = generator_config_resource
 	deck_manager = DeckManager.new()
 	add_child(deck_manager)
 	hud_controller = HudController.new()
@@ -341,6 +348,7 @@ func _start_run() -> void:
 	for child in bricks_root.get_children():
 		child.queue_free()
 	deck_manager.setup(starting_deck)
+	_generate_floor_plan_if_needed()
 	map_manager.reset_run()
 	var start_room := map_manager.get_start_room_choice()
 	if start_room.is_empty():
@@ -357,6 +365,15 @@ func _show_map() -> void:
 	_build_map_buttons()
 	var display_floor: int = min(floor_index + 1, max_floors)
 	floor_label.text = "Floor %d/%d" % [display_floor, max_floors]
+
+func _generate_floor_plan_if_needed() -> void:
+	if floor_plan_generator_config == null or not floor_plan_generator_config.enabled:
+		return
+	var generator := FLOOR_PLAN_GENERATOR.new()
+	var plan := generator.generate(floor_plan_generator_config)
+	if plan.is_empty():
+		return
+	map_manager.set_runtime_floor_plan(plan)
 
 func _apply_persist_checkbox_style() -> void:
 	if mods_persist_checkbox == null:
