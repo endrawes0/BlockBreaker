@@ -983,16 +983,16 @@ func _roll_treasure_rewards() -> Array[Dictionary]:
 	return rewards
 
 func _treasure_reward_weights() -> Dictionary:
-	var default_weights: Dictionary = {
-		"gold": 50,
-		"mod": 25,
-		"card": 25
-	}
 	if floor_plan_generator_config is FLOOR_PLAN_GENERATOR_CONFIG:
 		var weights: Dictionary = floor_plan_generator_config.treasure_reward_weights
 		if weights != null and not weights.is_empty():
 			return weights
-	return default_weights
+	push_warning("Treasure reward weights missing; falling back to equal weights.")
+	return {
+		"gold": 1,
+		"mod": 1,
+		"card": 1
+	}
 
 func _pick_weighted_unique_types(weights: Dictionary, count: int) -> Array[String]:
 	var pool: Array[String] = []

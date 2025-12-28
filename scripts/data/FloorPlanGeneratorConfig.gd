@@ -7,11 +7,7 @@ class_name FloorPlanGeneratorConfig
 @export var min_choices: int = 2
 @export var max_choices: int = 2
 @export var hidden_edge_chance: float = 0.0
-@export var treasure_reward_weights: Dictionary = {
-	"gold": 50,
-	"mod": 25,
-	"card": 25
-}
+@export var treasure_reward_weights: Dictionary = {}
 @export var room_weights: Dictionary = {
 	"combat": 3,
 	"rest": 1,
