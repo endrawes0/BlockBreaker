@@ -12,6 +12,7 @@ signal mod_consumed(mod_id: String)
 @export var paddle_path: NodePath
 
 @onready var paddle: Node2D = _resolve_paddle()
+@onready var bounce_player: AudioStreamPlayer = $BounceSfx
 @onready var rect: ColorRect = $Rect
 
 var launched: bool = false
@@ -25,10 +26,14 @@ var active_mod_effect: BallModEffect = null
 
 const EXPLOSION_RADIUS: float = 80.0
 const DEFAULT_MOD_COLOR: Color = Color(0.95, 0.95, 1, 1)
+const BOUNCE_BASE_FREQ: float = 200.0
+const BOUNCE_FREQ_VARIANCE: float = 20.0
 var mod_colors: Dictionary = {}
+static var _bounce_stream: AudioStreamWAV = null
 
 func _ready() -> void:
 	base_damage = damage
+	_ensure_bounce_stream()
 	_init_mod_effects()
 	_update_ball_color()
 
@@ -43,6 +48,7 @@ func _physics_process(delta: float) -> void:
 
 	var collision: KinematicCollision2D = move_and_collide(velocity * delta)
 	if collision:
+		_play_bounce_sfx()
 		var collider: Object = collision.get_collider()
 		if collider and collider.is_in_group("bricks"):
 			if collider.has_method("apply_damage_with_overkill"):
@@ -115,6 +121,18 @@ func _resolve_paddle() -> Node2D:
 	var fallback := get_tree().root.find_child("Paddle", true, false)
 	return fallback if fallback is Node2D else null
 
+func _play_bounce_sfx() -> void:
+	if bounce_player == null:
+		return
+	if _bounce_stream == null:
+		_ensure_bounce_stream()
+	if bounce_player.stream == null:
+		bounce_player.stream = _bounce_stream
+	var min_ratio: float = (BOUNCE_BASE_FREQ - BOUNCE_FREQ_VARIANCE) / BOUNCE_BASE_FREQ
+	var max_ratio: float = (BOUNCE_BASE_FREQ + BOUNCE_FREQ_VARIANCE) / BOUNCE_BASE_FREQ
+	bounce_player.pitch_scale = randf_range(min_ratio, max_ratio)
+	bounce_player.play()
+
 func _update_ball_color() -> void:
 	if rect == null:
 		return
@@ -146,3 +164,27 @@ func _init_mod_effects() -> void:
 		"spikes": SpikesMod.new(),
 		"miracle": MiracleMod.new()
 	}
+
+func _ensure_bounce_stream() -> void:
+	if _bounce_stream != null:
+		return
+	var stream := AudioStreamWAV.new()
+	stream.format = AudioStreamWAV.FORMAT_16_BITS
+	stream.stereo = false
+	stream.mix_rate = 22050
+	var freq: float = BOUNCE_BASE_FREQ
+	var duration: float = 0.1
+	var samples: int = int(stream.mix_rate * duration)
+	var data := PackedByteArray()
+	data.resize(samples * 2)
+	for i in range(samples):
+		var t: float = float(i) / float(stream.mix_rate)
+		var env: float = exp(-18.0 * t)
+		var sample: float = sin(TAU * freq * t) * env * 0.5
+		var value: int = int(clamp(sample, -1.0, 1.0) * 32767.0)
+		data[i * 2] = value & 0xFF
+		data[i * 2 + 1] = (value >> 8) & 0xFF
+	stream.data = data
+	_bounce_stream = stream
+	if bounce_player:
+		bounce_player.stream = _bounce_stream

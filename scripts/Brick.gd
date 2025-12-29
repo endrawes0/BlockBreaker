@@ -23,7 +23,6 @@ var regen_amount: int = 1
 var is_cursed: bool = false
 var suppress_curse_on_destroy: bool = false
 var particle_rng: RandomNumberGenerator = RandomNumberGenerator.new()
-
 func _ready() -> void:
 	particle_rng.randomize()
 
@@ -126,6 +125,8 @@ func _spawn_hit_particles(count: int) -> void:
 	var parent_node := get_parent()
 	if parent_node == null:
 		return
+	if count <= 0:
+		return
 	for _i in range(count):
 		var particle := HIT_PARTICLE_SCENE.instantiate()
 		if particle == null:
@@ -141,7 +142,7 @@ func _spawn_hit_particles(count: int) -> void:
 		if particle.has_method("setup"):
 			var velocity := Vector2(
 				particle_rng.randf_range(-120.0, 120.0),
-				particle_rng.randf_range(-320.0, -140.0)
+				particle_rng.randf_range(-320.0, 120.0)
 			)
 			particle.call("setup", rect.color, velocity)
 
@@ -170,7 +171,7 @@ func _spawn_bounce_particle() -> void:
 		particle.set("paddle_path_override", "Paddle")
 
 func _damage_particle_count(damage: int) -> int:
-	return clamp(6 + damage * 2, 6, 36)
+	return clamp(3 + damage, 3, 18)
 
 func _destroy_particle_count(damage: int) -> int:
-	return clamp(12 + damage * 4, 12, 60)
+	return clamp(6 + damage * 2, 6, 30)

@@ -28,6 +28,14 @@ func setup(starting_deck: Array[String]) -> void:
 	_emit_piles_changed()
 	_emit_hand_changed()
 
+func reset_piles() -> void:
+	draw_pile = deck.duplicate()
+	discard_pile.clear()
+	hand.clear()
+	_shuffle_array(draw_pile)
+	_emit_piles_changed()
+	_emit_hand_changed()
+
 func draw_cards(count: int) -> void:
 	for _i in range(count):
 		if hand.size() >= MAX_HAND_SIZE:
