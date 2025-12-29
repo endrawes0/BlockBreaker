@@ -218,6 +218,7 @@ func _ready() -> void:
 		"gameover_panel": gameover_panel,
 		"hand_container": hand_container
 	}, card_data, CARD_TYPE_COLORS, CARD_BUTTON_SIZE, card_art_textures)
+	_apply_hud_theme()
 	# Buttons removed; use Space to launch and cards/turn flow for control.
 	if restart_button:
 		restart_button.pressed.connect(_restart_run_same_seed)
@@ -825,6 +826,18 @@ func _show_shop() -> void:
 	_build_shop_buttons()
 	_refresh_mod_buttons()
 	_update_labels()
+
+func _apply_hud_theme() -> void:
+	if hud == null:
+		return
+	var theme := App.get_global_theme()
+	if theme == null:
+		return
+	for child in hud.get_children():
+		if child is Control:
+			var control := child as Control
+			if control.theme == null:
+				control.theme = theme
 
 func _show_treasure() -> void:
 	_show_treasure_panel()
