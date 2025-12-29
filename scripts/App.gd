@@ -13,6 +13,9 @@ const UI_PARTICLE_IGNORE_GROUP: String = "ui_particles_ignore"
 const UI_PARTICLE_COUNT: int = 8
 const UI_PARTICLE_SPEED_X: Vector2 = Vector2(-120.0, 120.0)
 const UI_PARTICLE_SPEED_Y: Vector2 = Vector2(-220.0, -80.0)
+const NEUTRAL_BUTTON_NORMAL: Color = Color(0.14, 0.14, 0.16)
+const NEUTRAL_BUTTON_HOVER: Color = Color(0.18, 0.18, 0.22)
+const NEUTRAL_BUTTON_PRESSED: Color = Color(0.12, 0.12, 0.14)
 
 var menu_instance: Node = null
 var run_instance: Node = null
@@ -232,6 +235,22 @@ func _ensure_ui_particles_root() -> void:
 	_ui_particles_root = Node2D.new()
 	_ui_particles_layer.add_child(_ui_particles_root)
 	get_tree().root.add_child(_ui_particles_layer)
+
+func apply_neutral_button_style(button: BaseButton) -> void:
+	if button == null:
+		return
+	button.add_theme_stylebox_override("normal", _make_button_box(NEUTRAL_BUTTON_NORMAL))
+	button.add_theme_stylebox_override("hover", _make_button_box(NEUTRAL_BUTTON_HOVER))
+	button.add_theme_stylebox_override("pressed", _make_button_box(NEUTRAL_BUTTON_PRESSED))
+
+func _make_button_box(color: Color) -> StyleBoxFlat:
+	var box := StyleBoxFlat.new()
+	box.bg_color = color
+	box.content_margin_left = 10
+	box.content_margin_top = 6
+	box.content_margin_right = 10
+	box.content_margin_bottom = 6
+	return box
 
 func get_base_resolution() -> Vector2i:
 	var width: int = int(ProjectSettings.get_setting(

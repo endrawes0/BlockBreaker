@@ -120,6 +120,7 @@ func create_card_button(card_id: String) -> Button:
 	button.text = ""
 	button.tooltip_text = _card_tooltip(card_id)
 	button.clip_text = false
+	App.apply_neutral_button_style(button)
 	_apply_card_style(button, card_id)
 	_apply_card_button_size(button)
 	_wire_hand_hover(button)

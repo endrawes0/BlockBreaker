@@ -904,6 +904,7 @@ func _build_shop_card_buttons() -> void:
 		else:
 			info_label.text = "Cannot remove."
 	)
+	App.apply_neutral_button_style(remove)
 	App.bind_button_feedback(remove)
 	shop_cards_buttons.add_child(remove)
 	var reroll := Button.new()
@@ -911,6 +912,7 @@ func _build_shop_card_buttons() -> void:
 	reroll.pressed.connect(func() -> void:
 		_reroll_shop_cards()
 	)
+	App.apply_neutral_button_style(reroll)
 	App.bind_button_feedback(reroll)
 	shop_cards_buttons.add_child(reroll)
 
@@ -932,6 +934,7 @@ func _build_shop_buff_buttons() -> void:
 		else:
 			info_label.text = "Not enough gold."
 	)
+	App.apply_neutral_button_style(upgrade)
 	App.bind_button_feedback(upgrade)
 	shop_buffs_buttons.add_child(upgrade)
 
@@ -951,6 +954,7 @@ func _build_shop_buff_buttons() -> void:
 		else:
 			info_label.text = "Not enough gold."
 	)
+	App.apply_neutral_button_style(vitality_buff)
 	App.bind_button_feedback(vitality_buff)
 	shop_buffs_buttons.add_child(vitality_buff)
 
@@ -980,6 +984,7 @@ func _build_shop_mod_buttons() -> void:
 			else:
 				info_label.text = "Not enough gold."
 		)
+		App.apply_neutral_button_style(button)
 		App.bind_button_feedback(button)
 		shop_ball_mods_buttons.add_child(button)
 
@@ -1361,6 +1366,7 @@ func _refresh_mod_buttons() -> void:
 		button.pressed.connect(func() -> void:
 			_select_ball_mod(active_mod_id)
 		)
+		App.apply_neutral_button_style(button)
 		App.bind_button_feedback(button)
 		mods_buttons.add_child(button)
 	var clear_button := Button.new()
@@ -1370,6 +1376,7 @@ func _refresh_mod_buttons() -> void:
 		_apply_ball_mod_to_active_balls()
 		_refresh_mod_buttons()
 	)
+	App.apply_neutral_button_style(clear_button)
 	App.bind_button_feedback(clear_button)
 	mods_buttons.add_child(clear_button)
 
