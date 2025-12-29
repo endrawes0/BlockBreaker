@@ -1333,7 +1333,13 @@ func _go_to_menu() -> void:
 	_hide_outcome_overlays()
 	if gameover_panel:
 		gameover_panel.visible = false
-	hud_controller.hide_all_panels()
+	_hide_all_panels()
+	if hud:
+		hud.visible = false
+	if hand_bar:
+		hand_bar.visible = false
+	if mods_panel:
+		mods_panel.visible = false
 	App.show_menu()
 
 func on_menu_opened() -> void:
