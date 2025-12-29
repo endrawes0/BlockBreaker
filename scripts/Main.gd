@@ -852,6 +852,8 @@ func _clear_hud_theme_exceptions() -> void:
 	if discard_button:
 		discard_button.theme = blank
 		discard_button.add_to_group(App.UI_PARTICLE_IGNORE_GROUP)
+	if mods_persist_checkbox:
+		mods_persist_checkbox.add_to_group(App.UI_PARTICLE_IGNORE_GROUP)
 
 func _show_treasure() -> void:
 	_show_treasure_panel()
