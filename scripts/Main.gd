@@ -548,6 +548,7 @@ func _build_map_buttons() -> Array[Dictionary]:
 		var selected_room_id := room_id
 		var button := Button.new()
 		button.text = map_manager.room_label(selected_room_type)
+		button.focus_mode = Control.FOCUS_ALL
 		button.pressed.connect(func() -> void:
 			map_manager.advance_to_room(selected_room_id)
 			_enter_room(selected_room_type)
