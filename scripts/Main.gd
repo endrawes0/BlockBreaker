@@ -219,6 +219,7 @@ func _ready() -> void:
 		"hand_container": hand_container
 	}, card_data, CARD_TYPE_COLORS, CARD_BUTTON_SIZE, card_art_textures)
 	_apply_hud_theme()
+	App.bind_button_feedback(self)
 	# Buttons removed; use Space to launch and cards/turn flow for control.
 	if restart_button:
 		restart_button.pressed.connect(_restart_run_same_seed)
@@ -551,6 +552,7 @@ func _build_map_buttons() -> Array[Dictionary]:
 			map_manager.advance_to_room(selected_room_id)
 			_enter_room(selected_room_type)
 		)
+		App.bind_button_feedback(button)
 		map_buttons.add_child(button)
 	return choices
 
@@ -846,8 +848,10 @@ func _clear_hud_theme_exceptions() -> void:
 	var blank := Theme.new()
 	if deck_button:
 		deck_button.theme = blank
+		deck_button.add_to_group(App.UI_PARTICLE_IGNORE_GROUP)
 	if discard_button:
 		discard_button.theme = blank
+		discard_button.add_to_group(App.UI_PARTICLE_IGNORE_GROUP)
 
 func _show_treasure() -> void:
 	_show_treasure_panel()
@@ -898,12 +902,14 @@ func _build_shop_card_buttons() -> void:
 		else:
 			info_label.text = "Cannot remove."
 	)
+	App.bind_button_feedback(remove)
 	shop_cards_buttons.add_child(remove)
 	var reroll := Button.new()
 	reroll.text = "Reroll Cards (%dg)" % _shop_reroll_price()
 	reroll.pressed.connect(func() -> void:
 		_reroll_shop_cards()
 	)
+	App.bind_button_feedback(reroll)
 	shop_cards_buttons.add_child(reroll)
 
 func _clear_shop_card_buttons() -> void:
@@ -924,6 +930,7 @@ func _build_shop_buff_buttons() -> void:
 		else:
 			info_label.text = "Not enough gold."
 	)
+	App.bind_button_feedback(upgrade)
 	shop_buffs_buttons.add_child(upgrade)
 
 	var vitality_buff := Button.new()
@@ -942,6 +949,7 @@ func _build_shop_buff_buttons() -> void:
 		else:
 			info_label.text = "Not enough gold."
 	)
+	App.bind_button_feedback(vitality_buff)
 	shop_buffs_buttons.add_child(vitality_buff)
 
 func _build_shop_mod_buttons() -> void:
@@ -970,6 +978,7 @@ func _build_shop_mod_buttons() -> void:
 			else:
 				info_label.text = "Not enough gold."
 		)
+		App.bind_button_feedback(button)
 		shop_ball_mods_buttons.add_child(button)
 
 func _reset_shop_offers() -> void:
@@ -1350,6 +1359,7 @@ func _refresh_mod_buttons() -> void:
 		button.pressed.connect(func() -> void:
 			_select_ball_mod(active_mod_id)
 		)
+		App.bind_button_feedback(button)
 		mods_buttons.add_child(button)
 	var clear_button := Button.new()
 	clear_button.text = "Clear"
@@ -1358,6 +1368,7 @@ func _refresh_mod_buttons() -> void:
 		_apply_ball_mod_to_active_balls()
 		_refresh_mod_buttons()
 	)
+	App.bind_button_feedback(clear_button)
 	mods_buttons.add_child(clear_button)
 
 func _select_ball_mod(mod_id: String) -> void:

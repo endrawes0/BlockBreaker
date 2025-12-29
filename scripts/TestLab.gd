@@ -95,6 +95,15 @@ func _apply_debug_theme() -> void:
 	if panel == null:
 		return
 	panel.theme = Theme.new()
+	_mark_debug_buttons()
+
+func _mark_debug_buttons() -> void:
+	var container := get_node("DebugPanel/VBox") as VBoxContainer
+	if container == null:
+		return
+	for child in container.get_children():
+		if child is BaseButton:
+			(child as BaseButton).add_to_group(App.UI_PARTICLE_IGNORE_GROUP)
 
 func _connect_button(path: String, action: Callable) -> void:
 	var button := get_node(path) as Button

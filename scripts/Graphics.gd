@@ -27,6 +27,7 @@ func _ready() -> void:
 	back_button.pressed.connect(_back_to_menu)
 	_sync_window_mode()
 	_sync_resolution()
+	App.bind_button_feedback(self)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
