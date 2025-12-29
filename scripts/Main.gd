@@ -834,12 +834,20 @@ func _apply_hud_theme() -> void:
 	if theme == null:
 		return
 	_apply_theme_recursive(hud, theme)
+	_clear_hud_theme_exceptions()
 
 func _apply_theme_recursive(node: Node, theme: Theme) -> void:
 	if node is Control:
 		(node as Control).theme = theme
 	for child in node.get_children():
 		_apply_theme_recursive(child, theme)
+
+func _clear_hud_theme_exceptions() -> void:
+	var blank := Theme.new()
+	if deck_button:
+		deck_button.theme = blank
+	if discard_button:
+		discard_button.theme = blank
 
 func _show_treasure() -> void:
 	_show_treasure_panel()
