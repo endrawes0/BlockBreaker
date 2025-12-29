@@ -8,6 +8,14 @@ const TEST_SCENE: PackedScene = preload("res://scenes/TestLab.tscn")
 const SETTINGS_PATH: String = "user://settings.cfg"
 const FALLBACK_BASE_RESOLUTION: Vector2i = Vector2i(800, 600)
 const UI_SCALE: float = 0.75
+const UI_PARTICLE_SCENE: PackedScene = preload("res://scenes/HitParticle.tscn")
+const UI_PARTICLE_IGNORE_GROUP: String = "ui_particles_ignore"
+const UI_PARTICLE_COUNT: int = 8
+const UI_PARTICLE_SPEED_X: Vector2 = Vector2(-120.0, 120.0)
+const UI_PARTICLE_SPEED_Y: Vector2 = Vector2(-220.0, -80.0)
+const NEUTRAL_BUTTON_NORMAL: Color = Color(0.14, 0.14, 0.16)
+const NEUTRAL_BUTTON_HOVER: Color = Color(0.18, 0.18, 0.22)
+const NEUTRAL_BUTTON_PRESSED: Color = Color(0.12, 0.12, 0.14)
 
 var menu_instance: Node = null
 var run_instance: Node = null
@@ -17,8 +25,12 @@ var test_instance: Node = null
 var _layout_resolution_cache: Vector2i = Vector2i.ZERO
 var _layout_size_cache: Vector2 = Vector2.ZERO
 var _global_theme: Theme = null
+var _ui_particles_layer: CanvasLayer = null
+var _ui_particles_root: Node2D = null
+var _ui_particle_rng: RandomNumberGenerator = RandomNumberGenerator.new()
 
 func _ready() -> void:
+	_ui_particle_rng.randomize()
 	_apply_global_theme()
 	_apply_saved_graphics()
 	_refresh_layout_cache()
@@ -150,6 +162,103 @@ func _apply_global_theme() -> void:
 
 func get_global_theme() -> Theme:
 	return _global_theme
+
+func bind_button_feedback(root: Node) -> void:
+	if root == null:
+		return
+	_bind_button_feedback_recursive(root)
+
+func _bind_button_feedback_recursive(node: Node) -> void:
+	if node is BaseButton:
+		_bind_button_feedback(node as BaseButton)
+	for child in node.get_children():
+		_bind_button_feedback_recursive(child)
+
+func _bind_button_feedback(button: BaseButton) -> void:
+	if button.is_in_group(UI_PARTICLE_IGNORE_GROUP):
+		return
+	if button.has_meta("ui_particles_bound"):
+		return
+	button.set_meta("ui_particles_bound", true)
+	button.pressed.connect(func() -> void:
+		var color := _button_particle_color(button)
+		var position := _button_particle_position(button)
+		_spawn_button_particles(position, color, UI_PARTICLE_COUNT)
+	)
+
+func _button_particle_position(button: Control) -> Vector2:
+	if button.is_hovered() and button.get_viewport():
+		return button.get_viewport().get_mouse_position()
+	return button.get_global_rect().get_center()
+
+func _button_particle_color(button: Control) -> Color:
+	var color := button.self_modulate
+	if color != Color(1, 1, 1, 1):
+		return color
+	var pressed := button.get_theme_stylebox("pressed", "Button")
+	if pressed is StyleBoxFlat:
+		return (pressed as StyleBoxFlat).bg_color
+	return button.get_theme_color("font_color", "Button")
+
+func _spawn_button_particles(position: Vector2, color: Color, count: int) -> void:
+	if count <= 0:
+		return
+	_ensure_ui_particles_root()
+	if _ui_particles_root == null:
+		return
+	for _i in range(count):
+		var particle := UI_PARTICLE_SCENE.instantiate()
+		if particle == null:
+			continue
+		_ui_particles_root.add_child(particle)
+		if particle is Node2D:
+			var node := particle as Node2D
+			var jitter := Vector2(
+				_ui_particle_rng.randf_range(-6.0, 6.0),
+				_ui_particle_rng.randf_range(-6.0, 6.0)
+			)
+			node.position = position + jitter
+		if particle.has_method("setup"):
+			var velocity := Vector2(
+				_ui_particle_rng.randf_range(UI_PARTICLE_SPEED_X.x, UI_PARTICLE_SPEED_X.y),
+				_ui_particle_rng.randf_range(UI_PARTICLE_SPEED_Y.x, UI_PARTICLE_SPEED_Y.y)
+			)
+			particle.call("setup", color, velocity)
+
+func _ensure_ui_particles_root() -> void:
+	if _ui_particles_layer != null and is_instance_valid(_ui_particles_layer):
+		return
+	if get_tree() == null or get_tree().root == null:
+		return
+	_ui_particles_layer = CanvasLayer.new()
+	_ui_particles_layer.layer = 100
+	_ui_particles_root = Node2D.new()
+	_ui_particles_layer.add_child(_ui_particles_root)
+	get_tree().root.add_child(_ui_particles_layer)
+
+func apply_neutral_button_style(button: BaseButton) -> void:
+	if button == null:
+		return
+	button.add_theme_stylebox_override("normal", _make_button_box(NEUTRAL_BUTTON_NORMAL))
+	button.add_theme_stylebox_override("hover", _make_button_box(NEUTRAL_BUTTON_HOVER))
+	button.add_theme_stylebox_override("pressed", _make_button_box(NEUTRAL_BUTTON_PRESSED))
+
+func apply_neutral_button_style_no_hover(button: BaseButton) -> void:
+	if button == null:
+		return
+	var normal := _make_button_box(NEUTRAL_BUTTON_NORMAL)
+	button.add_theme_stylebox_override("normal", normal)
+	button.add_theme_stylebox_override("hover", normal)
+	button.add_theme_stylebox_override("pressed", _make_button_box(NEUTRAL_BUTTON_PRESSED))
+
+func _make_button_box(color: Color) -> StyleBoxFlat:
+	var box := StyleBoxFlat.new()
+	box.bg_color = color
+	box.content_margin_left = 10
+	box.content_margin_top = 6
+	box.content_margin_right = 10
+	box.content_margin_bottom = 6
+	return box
 
 func get_base_resolution() -> Vector2i:
 	var width: int = int(ProjectSettings.get_setting(

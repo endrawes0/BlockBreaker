@@ -219,6 +219,7 @@ func _ready() -> void:
 		"hand_container": hand_container
 	}, card_data, CARD_TYPE_COLORS, CARD_BUTTON_SIZE, card_art_textures)
 	_apply_hud_theme()
+	App.bind_button_feedback(self)
 	# Buttons removed; use Space to launch and cards/turn flow for control.
 	if restart_button:
 		restart_button.pressed.connect(_restart_run_same_seed)
@@ -469,7 +470,10 @@ func _show_map() -> void:
 	state = GameState.MAP
 	hud_controller.hide_all_panels()
 	map_panel.visible = true
+	if get_viewport():
+		get_viewport().gui_release_focus()
 	var choices := _build_map_buttons()
+	call_deferred("_focus_map_buttons_deferred")
 	_update_map_graph(choices)
 	var display_floor: int = min(floor_index + 1, max_floors)
 	floor_label.text = "Floor %d/%d" % [display_floor, max_floors]
@@ -547,12 +551,72 @@ func _build_map_buttons() -> Array[Dictionary]:
 		var selected_room_id := room_id
 		var button := Button.new()
 		button.text = map_manager.room_label(selected_room_type)
+		button.focus_mode = Control.FOCUS_ALL
 		button.pressed.connect(func() -> void:
 			map_manager.advance_to_room(selected_room_id)
 			_enter_room(selected_room_type)
 		)
+		App.bind_button_feedback(button)
 		map_buttons.add_child(button)
 	return choices
+
+func _focus_map_buttons() -> void:
+	if map_buttons == null:
+		return
+	var buttons: Array[Button] = []
+	for child in map_buttons.get_children():
+		if child is Button:
+			buttons.append(child as Button)
+	if buttons.is_empty():
+		return
+	var count := buttons.size()
+	for i in range(count):
+		var button := buttons[i]
+		button.focus_mode = Control.FOCUS_ALL
+		if count > 1:
+			var next := buttons[(i + 1) % count]
+			var prev := buttons[(i - 1 + count) % count]
+			button.focus_next = next.get_path()
+			button.focus_previous = prev.get_path()
+	buttons[0].grab_focus()
+
+func _focus_map_buttons_deferred() -> void:
+	await get_tree().process_frame
+	_focus_map_buttons()
+
+func _focus_shop_buttons() -> void:
+	if shop_panel == null:
+		return
+	var buttons: Array[BaseButton] = []
+	_collect_buttons(shop_panel, buttons)
+	_apply_focus_chain(buttons)
+
+func _collect_buttons(node: Node, buttons: Array[BaseButton]) -> void:
+	for child in node.get_children():
+		if child is BaseButton:
+			buttons.append(child as BaseButton)
+		_collect_buttons(child, buttons)
+
+func _apply_focus_chain(buttons: Array[BaseButton]) -> void:
+	if buttons.is_empty():
+		return
+	var ordered: Array[BaseButton] = []
+	for button in buttons:
+		if button == null or not button.visible:
+			continue
+		button.focus_mode = Control.FOCUS_ALL
+		ordered.append(button)
+	if ordered.is_empty():
+		return
+	var count := ordered.size()
+	for i in range(count):
+		var button := ordered[i]
+		if count > 1:
+			var next := ordered[(i + 1) % count]
+			var prev := ordered[(i - 1 + count) % count]
+			button.focus_next = next.get_path()
+			button.focus_previous = prev.get_path()
+	ordered[0].grab_focus()
 
 func _clear_map_buttons() -> void:
 	if map_buttons == null:
@@ -824,6 +888,7 @@ func _show_shop() -> void:
 	info_label.text = ""
 	_reset_shop_offers()
 	_build_shop_buttons()
+	_focus_shop_buttons()
 	_refresh_mod_buttons()
 	_update_labels()
 
@@ -834,6 +899,7 @@ func _apply_hud_theme() -> void:
 	if theme == null:
 		return
 	_apply_theme_recursive(hud, theme)
+	_apply_hud_button_exclusions()
 
 func _apply_theme_recursive(node: Node, theme: Theme) -> void:
 	if node is Control:
@@ -841,6 +907,17 @@ func _apply_theme_recursive(node: Node, theme: Theme) -> void:
 	for child in node.get_children():
 		_apply_theme_recursive(child, theme)
 
+func _apply_hud_button_exclusions() -> void:
+	var blank := Theme.new()
+	if deck_button:
+		deck_button.theme = blank
+		deck_button.add_to_group(App.UI_PARTICLE_IGNORE_GROUP)
+	if discard_button:
+		discard_button.theme = blank
+		discard_button.add_to_group(App.UI_PARTICLE_IGNORE_GROUP)
+	if mods_persist_checkbox:
+		App.apply_neutral_button_style_no_hover(mods_persist_checkbox)
+		mods_persist_checkbox.add_to_group(App.UI_PARTICLE_IGNORE_GROUP)
 func _show_treasure() -> void:
 	_show_treasure_panel()
 
@@ -890,12 +967,16 @@ func _build_shop_card_buttons() -> void:
 		else:
 			info_label.text = "Cannot remove."
 	)
+	App.apply_neutral_button_style(remove)
+	App.bind_button_feedback(remove)
 	shop_cards_buttons.add_child(remove)
 	var reroll := Button.new()
 	reroll.text = "Reroll Cards (%dg)" % _shop_reroll_price()
 	reroll.pressed.connect(func() -> void:
 		_reroll_shop_cards()
 	)
+	App.apply_neutral_button_style(reroll)
+	App.bind_button_feedback(reroll)
 	shop_cards_buttons.add_child(reroll)
 
 func _clear_shop_card_buttons() -> void:
@@ -916,6 +997,8 @@ func _build_shop_buff_buttons() -> void:
 		else:
 			info_label.text = "Not enough gold."
 	)
+	App.apply_neutral_button_style(upgrade)
+	App.bind_button_feedback(upgrade)
 	shop_buffs_buttons.add_child(upgrade)
 
 	var vitality_buff := Button.new()
@@ -934,6 +1017,8 @@ func _build_shop_buff_buttons() -> void:
 		else:
 			info_label.text = "Not enough gold."
 	)
+	App.apply_neutral_button_style(vitality_buff)
+	App.bind_button_feedback(vitality_buff)
 	shop_buffs_buttons.add_child(vitality_buff)
 
 func _build_shop_mod_buttons() -> void:
@@ -962,6 +1047,8 @@ func _build_shop_mod_buttons() -> void:
 			else:
 				info_label.text = "Not enough gold."
 		)
+		App.apply_neutral_button_style(button)
+		App.bind_button_feedback(button)
 		shop_ball_mods_buttons.add_child(button)
 
 func _reset_shop_offers() -> void:
@@ -1342,6 +1429,8 @@ func _refresh_mod_buttons() -> void:
 		button.pressed.connect(func() -> void:
 			_select_ball_mod(active_mod_id)
 		)
+		App.apply_neutral_button_style(button)
+		App.bind_button_feedback(button)
 		mods_buttons.add_child(button)
 	var clear_button := Button.new()
 	clear_button.text = "Clear"
@@ -1350,6 +1439,8 @@ func _refresh_mod_buttons() -> void:
 		_apply_ball_mod_to_active_balls()
 		_refresh_mod_buttons()
 	)
+	App.apply_neutral_button_style(clear_button)
+	App.bind_button_feedback(clear_button)
 	mods_buttons.add_child(clear_button)
 
 func _select_ball_mod(mod_id: String) -> void:
