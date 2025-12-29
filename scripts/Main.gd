@@ -470,8 +470,10 @@ func _show_map() -> void:
 	state = GameState.MAP
 	hud_controller.hide_all_panels()
 	map_panel.visible = true
+	if get_viewport():
+		get_viewport().gui_release_focus()
 	var choices := _build_map_buttons()
-	call_deferred("_focus_map_buttons")
+	call_deferred("_focus_map_buttons_deferred")
 	_update_map_graph(choices)
 	var display_floor: int = min(floor_index + 1, max_floors)
 	floor_label.text = "Floor %d/%d" % [display_floor, max_floors]
@@ -561,8 +563,6 @@ func _build_map_buttons() -> Array[Dictionary]:
 func _focus_map_buttons() -> void:
 	if map_buttons == null:
 		return
-	if get_viewport():
-		get_viewport().gui_release_focus()
 	var buttons: Array[Button] = []
 	for child in map_buttons.get_children():
 		if child is Button:
@@ -579,6 +579,10 @@ func _focus_map_buttons() -> void:
 			button.focus_next = next.get_path()
 			button.focus_previous = prev.get_path()
 	buttons[0].grab_focus()
+
+func _focus_map_buttons_deferred() -> void:
+	await get_tree().process_frame
+	_focus_map_buttons()
 
 func _focus_shop_buttons() -> void:
 	if shop_panel == null:
