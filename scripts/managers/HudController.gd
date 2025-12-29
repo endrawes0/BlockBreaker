@@ -189,6 +189,8 @@ func create_card_button(card_id: String) -> Button:
 	desc_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	desc_frame.add_child(desc_label)
 
+	App.bind_button_feedback(button)
+
 	return button
 
 func set_card_button_desc(button: Button, text: String) -> void:

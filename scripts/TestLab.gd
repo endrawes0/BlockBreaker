@@ -4,6 +4,7 @@ extends Control
 
 func _ready() -> void:
 	_apply_debug_font_size(9)
+	_apply_debug_theme()
 	_connect_button("DebugPanel/VBox/StartCombat", func() -> void:
 		main.floor_index = 1
 		main._start_encounter(false)
@@ -89,6 +90,20 @@ func _apply_debug_font_size(size: int) -> void:
 		if child is Control:
 			(child as Control).add_theme_font_size_override("font_size", size)
 
+func _apply_debug_theme() -> void:
+	var panel := get_node("DebugPanel") as Control
+	if panel == null:
+		return
+	panel.theme = Theme.new()
+	_mark_debug_buttons()
+
+func _mark_debug_buttons() -> void:
+	var container := get_node("DebugPanel/VBox") as VBoxContainer
+	if container == null:
+		return
+	for child in container.get_children():
+		if child is BaseButton:
+			(child as BaseButton).add_to_group(App.UI_PARTICLE_IGNORE_GROUP)
 func _connect_button(path: String, action: Callable) -> void:
 	var button := get_node(path) as Button
 	if button:

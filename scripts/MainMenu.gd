@@ -31,6 +31,7 @@ func _ready() -> void:
 		seed_input.text_changed.connect(_on_seed_text_changed)
 	_lock_test_lab()
 	_update_continue_button()
+	App.bind_button_feedback(self)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel") and App.has_run():
