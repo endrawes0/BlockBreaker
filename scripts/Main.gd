@@ -471,6 +471,7 @@ func _show_map() -> void:
 	hud_controller.hide_all_panels()
 	map_panel.visible = true
 	var choices := _build_map_buttons()
+	_focus_map_buttons()
 	_update_map_graph(choices)
 	var display_floor: int = min(floor_index + 1, max_floors)
 	floor_label.text = "Floor %d/%d" % [display_floor, max_floors]
@@ -556,6 +557,26 @@ func _build_map_buttons() -> Array[Dictionary]:
 		App.bind_button_feedback(button)
 		map_buttons.add_child(button)
 	return choices
+
+func _focus_map_buttons() -> void:
+	if map_buttons == null:
+		return
+	var buttons: Array[Button] = []
+	for child in map_buttons.get_children():
+		if child is Button:
+			buttons.append(child as Button)
+	if buttons.is_empty():
+		return
+	var count := buttons.size()
+	for i in range(count):
+		var button := buttons[i]
+		button.focus_mode = Control.FOCUS_ALL
+		if count > 1:
+			var next := buttons[(i + 1) % count]
+			var prev := buttons[(i - 1 + count) % count]
+			button.focus_next = next.get_path()
+			button.focus_previous = prev.get_path()
+	buttons[0].grab_focus()
 
 func _clear_map_buttons() -> void:
 	if map_buttons == null:
