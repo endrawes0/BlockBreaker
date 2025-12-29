@@ -834,12 +834,17 @@ func _apply_hud_theme() -> void:
 	if theme == null:
 		return
 	_apply_theme_recursive(hud, theme)
+	_apply_hud_button_exclusions()
 
 func _apply_theme_recursive(node: Node, theme: Theme) -> void:
 	if node is Control:
 		(node as Control).theme = theme
 	for child in node.get_children():
 		_apply_theme_recursive(child, theme)
+
+func _apply_hud_button_exclusions() -> void:
+	if mods_persist_checkbox:
+		App.apply_neutral_button_style(mods_persist_checkbox)
 
 func _show_treasure() -> void:
 	_show_treasure_panel()
@@ -890,12 +895,14 @@ func _build_shop_card_buttons() -> void:
 		else:
 			info_label.text = "Cannot remove."
 	)
+	App.apply_neutral_button_style(remove)
 	shop_cards_buttons.add_child(remove)
 	var reroll := Button.new()
 	reroll.text = "Reroll Cards (%dg)" % _shop_reroll_price()
 	reroll.pressed.connect(func() -> void:
 		_reroll_shop_cards()
 	)
+	App.apply_neutral_button_style(reroll)
 	shop_cards_buttons.add_child(reroll)
 
 func _clear_shop_card_buttons() -> void:
@@ -916,6 +923,7 @@ func _build_shop_buff_buttons() -> void:
 		else:
 			info_label.text = "Not enough gold."
 	)
+	App.apply_neutral_button_style(upgrade)
 	shop_buffs_buttons.add_child(upgrade)
 
 	var vitality_buff := Button.new()
@@ -934,6 +942,7 @@ func _build_shop_buff_buttons() -> void:
 		else:
 			info_label.text = "Not enough gold."
 	)
+	App.apply_neutral_button_style(vitality_buff)
 	shop_buffs_buttons.add_child(vitality_buff)
 
 func _build_shop_mod_buttons() -> void:
@@ -962,6 +971,7 @@ func _build_shop_mod_buttons() -> void:
 			else:
 				info_label.text = "Not enough gold."
 		)
+		App.apply_neutral_button_style(button)
 		shop_ball_mods_buttons.add_child(button)
 
 func _reset_shop_offers() -> void:
@@ -1342,6 +1352,7 @@ func _refresh_mod_buttons() -> void:
 		button.pressed.connect(func() -> void:
 			_select_ball_mod(active_mod_id)
 		)
+		App.apply_neutral_button_style(button)
 		mods_buttons.add_child(button)
 	var clear_button := Button.new()
 	clear_button.text = "Clear"

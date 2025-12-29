@@ -8,6 +8,9 @@ const TEST_SCENE: PackedScene = preload("res://scenes/TestLab.tscn")
 const SETTINGS_PATH: String = "user://settings.cfg"
 const FALLBACK_BASE_RESOLUTION: Vector2i = Vector2i(800, 600)
 const UI_SCALE: float = 0.75
+const NEUTRAL_BUTTON_NORMAL: Color = Color(0.14, 0.14, 0.16)
+const NEUTRAL_BUTTON_HOVER: Color = Color(0.18, 0.18, 0.22)
+const NEUTRAL_BUTTON_PRESSED: Color = Color(0.12, 0.12, 0.14)
 
 var menu_instance: Node = null
 var run_instance: Node = null
@@ -150,6 +153,22 @@ func _apply_global_theme() -> void:
 
 func get_global_theme() -> Theme:
 	return _global_theme
+
+func apply_neutral_button_style(button: BaseButton) -> void:
+	if button == null:
+		return
+	button.add_theme_stylebox_override("normal", _make_button_box(NEUTRAL_BUTTON_NORMAL))
+	button.add_theme_stylebox_override("hover", _make_button_box(NEUTRAL_BUTTON_HOVER))
+	button.add_theme_stylebox_override("pressed", _make_button_box(NEUTRAL_BUTTON_PRESSED))
+
+func _make_button_box(color: Color) -> StyleBoxFlat:
+	var box := StyleBoxFlat.new()
+	box.bg_color = color
+	box.content_margin_left = 10
+	box.content_margin_top = 6
+	box.content_margin_right = 10
+	box.content_margin_bottom = 6
+	return box
 
 func get_base_resolution() -> Vector2i:
 	var width: int = int(ProjectSettings.get_setting(
