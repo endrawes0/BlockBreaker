@@ -141,60 +141,12 @@ func _apply_global_theme() -> void:
 	if get_tree() == null or get_tree().root == null:
 		return
 	var theme_path := String(ProjectSettings.get_setting("gui/theme/custom", ""))
-	var theme_resource: Theme = null
-	if not theme_path.is_empty():
-		var loaded := ResourceLoader.load(theme_path, "", ResourceLoader.CACHE_MODE_IGNORE)
-		if loaded is Theme:
-			theme_resource = loaded
-	if theme_resource == null or not theme_resource.has_stylebox("panel", "Panel"):
-		theme_resource = _build_global_theme()
-	_global_theme = theme_resource
-	get_tree().root.theme = theme_resource
-
-func _build_global_theme() -> Theme:
-	var theme := Theme.new()
-	theme.default_font_size = 14
-
-	var btn_normal := _make_button_box(Color(0.14, 0.14, 0.16, 1), Color(0.45, 0.45, 0.5, 1))
-	var btn_hover := _make_button_box(Color(0.18, 0.18, 0.22, 1), Color(0.95, 0.6, 0.2, 1))
-	var btn_pressed := _make_button_box(Color(0.25, 0.2, 0.12, 1), Color(0.95, 0.85, 0.25, 1))
-	var btn_disabled := _make_button_box(Color(0.12, 0.12, 0.14, 1), Color(0.3, 0.3, 0.35, 1))
-
-	theme.set_stylebox("normal", "Button", btn_normal)
-	theme.set_stylebox("hover", "Button", btn_hover)
-	theme.set_stylebox("pressed", "Button", btn_pressed)
-	theme.set_stylebox("disabled", "Button", btn_disabled)
-	theme.set_color("font_color", "Button", Color(0.96, 0.96, 0.98, 1))
-	theme.set_color("font_hover_color", "Button", Color(1, 1, 1, 1))
-	theme.set_color("font_pressed_color", "Button", Color(1, 1, 1, 1))
-	theme.set_color("font_disabled_color", "Button", Color(0.6, 0.6, 0.65, 1))
-
-	theme.set_color("font_color", "Label", Color(0.94, 0.94, 0.98, 1))
-
-	var panel := _make_panel_box(Color(0.11, 0.11, 0.13, 1), Color(0.3, 0.3, 0.35, 1))
-	theme.set_stylebox("panel", "Panel", panel)
-	theme.set_stylebox("panel", "PanelContainer", panel)
-	theme.set_stylebox("panel", "PopupPanel", panel)
-
-	return theme
-
-func _make_button_box(bg: Color, border: Color) -> StyleBoxFlat:
-	var box := StyleBoxFlat.new()
-	box.bg_color = bg
-	box.content_margin_left = 10
-	box.content_margin_top = 6
-	box.content_margin_right = 10
-	box.content_margin_bottom = 6
-	return box
-
-func _make_panel_box(bg: Color, border: Color) -> StyleBoxFlat:
-	var box := StyleBoxFlat.new()
-	box.bg_color = bg
-	box.content_margin_left = 8
-	box.content_margin_top = 6
-	box.content_margin_right = 8
-	box.content_margin_bottom = 6
-	return box
+	if theme_path.is_empty():
+		return
+	var loaded := ResourceLoader.load(theme_path, "", ResourceLoader.CACHE_MODE_IGNORE)
+	if loaded is Theme:
+		_global_theme = loaded
+		get_tree().root.theme = loaded
 
 func get_global_theme() -> Theme:
 	return _global_theme
