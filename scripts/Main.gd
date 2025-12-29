@@ -471,7 +471,7 @@ func _show_map() -> void:
 	hud_controller.hide_all_panels()
 	map_panel.visible = true
 	var choices := _build_map_buttons()
-	_focus_map_buttons()
+	call_deferred("_focus_map_buttons")
 	_update_map_graph(choices)
 	var display_floor: int = min(floor_index + 1, max_floors)
 	floor_label.text = "Floor %d/%d" % [display_floor, max_floors]
