@@ -129,4 +129,5 @@ func _apply_content_scale() -> void:
 		var root := get_tree().root
 		root.content_scale_mode = Window.CONTENT_SCALE_MODE_CANVAS_ITEMS
 		root.content_scale_aspect = Window.CONTENT_SCALE_ASPECT_EXPAND
+		App.refresh_layout_cache()
 		root.content_scale_size = Vector2(App.get_layout_resolution())

@@ -621,6 +621,7 @@ func _start_encounter(is_elite: bool) -> void:
 	hud_controller.hide_all_panels()
 	info_label.text = "Plan your volley, then launch."
 	_clear_active_balls()
+	_reset_deck_for_next_floor()
 	current_is_boss = false
 	var config := encounter_manager.build_config_from_floor(floor_index, is_elite, false)
 	current_pattern = config.pattern_id
@@ -639,6 +640,7 @@ func _start_boss() -> void:
 	hud_controller.hide_all_panels()
 	info_label.text = "Boss fight. Plan carefully."
 	_clear_active_balls()
+	_reset_deck_for_next_floor()
 	current_is_boss = true
 	var config := encounter_manager.build_config_from_floor(floor_index, false, true)
 	current_pattern = config.pattern_id
@@ -781,11 +783,18 @@ func _on_ball_mod_consumed(mod_id: String) -> void:
 func _end_encounter() -> void:
 	hud_controller.hide_all_panels()
 	_clear_active_balls()
+	_reset_deck_for_next_floor()
 	if current_is_boss:
 		_show_victory()
 		return
 	gold += 25
 	_show_reward_panel()
+
+func _reset_deck_for_next_floor() -> void:
+	if deck_manager:
+		deck_manager.reset_piles()
+	_refresh_hand()
+	_update_labels()
 
 func _build_reward_buttons() -> void:
 	_build_combat_reward_buttons()

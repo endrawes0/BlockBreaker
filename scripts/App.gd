@@ -14,9 +14,13 @@ var run_instance: Node = null
 var help_instance: Node = null
 var graphics_instance: Node = null
 var test_instance: Node = null
+var _layout_resolution_cache: Vector2i = Vector2i.ZERO
+var _layout_size_cache: Vector2 = Vector2.ZERO
 
 func _ready() -> void:
 	_apply_saved_graphics()
+	_refresh_layout_cache()
+	_connect_window_signals()
 	var current: Node = get_tree().current_scene
 	if current and current.scene_file_path == "res://scenes/MainMenu.tscn":
 		menu_instance = current
@@ -154,9 +158,31 @@ func get_base_resolution() -> Vector2i:
 	return Vector2i(width, height)
 
 func get_layout_resolution() -> Vector2i:
+	if _layout_resolution_cache != Vector2i.ZERO:
+		return _layout_resolution_cache
 	var base: Vector2i = get_base_resolution()
 	var scale: float = max(0.1, UI_SCALE)
-	return Vector2i(int(round(base.x / scale)), int(round(base.y / scale)))
+	_layout_resolution_cache = Vector2i(int(round(base.x / scale)), int(round(base.y / scale)))
+	_layout_size_cache = Vector2(_layout_resolution_cache)
+	return _layout_resolution_cache
 
 func get_layout_size() -> Vector2:
-	return Vector2(get_layout_resolution())
+	if _layout_size_cache != Vector2.ZERO:
+		return _layout_size_cache
+	_layout_size_cache = Vector2(get_layout_resolution())
+	return _layout_size_cache
+
+func refresh_layout_cache() -> void:
+	_layout_resolution_cache = Vector2i.ZERO
+	_layout_size_cache = Vector2.ZERO
+	_layout_resolution_cache = get_layout_resolution()
+	_layout_size_cache = Vector2(_layout_resolution_cache)
+
+func _refresh_layout_cache() -> void:
+	refresh_layout_cache()
+
+func _connect_window_signals() -> void:
+	if get_tree() and get_tree().root:
+		var root := get_tree().root
+		if not root.size_changed.is_connected(_refresh_layout_cache):
+			root.size_changed.connect(_refresh_layout_cache)
