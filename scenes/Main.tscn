@@ -144,7 +144,7 @@ anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 mouse_filter = 2
-color = Color(0.3, 0.08, 0.08, 0.18)
+color = Color(0.22, 0.06, 0.06, 0.26)
 z_index = -1
 
 [node name="HandBar" type="Panel" parent="HUD"]

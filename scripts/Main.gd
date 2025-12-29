@@ -1253,19 +1253,31 @@ func _show_outcome_overlay(is_victory: bool) -> void:
 	_hide_outcome_overlays()
 	if is_victory and victory_overlay:
 		victory_overlay.visible = true
-		_spawn_outcome_particles(Color(0.95, 0.85, 0.25, 1), true)
+		_spawn_victory_particles()
 	elif not is_victory and defeat_overlay:
 		defeat_overlay.visible = true
 		_spawn_outcome_particles(Color(0.35, 0.1, 0.1, 1), false)
 
-func _spawn_outcome_particles(color: Color, is_victory: bool) -> void:
+func _spawn_victory_particles() -> void:
+	var palette: Array[Color] = [
+		Color(0.86, 0.32, 0.26, 1),
+		Color(0.95, 0.60, 0.20, 1),
+		Color(0.95, 0.85, 0.25, 1),
+		Color(0.45, 0.78, 0.36, 1),
+		Color(0.26, 0.62, 0.96, 1)
+	]
+	for i in range(palette.size()):
+		_spawn_outcome_particles(palette[i], true, i, palette.size())
+
+func _spawn_outcome_particles(color: Color, is_victory: bool, index: int = 0, total: int = 1) -> void:
 	if OUTCOME_PARTICLE_COUNT <= 0:
 		return
 	var parent_node: Node = hud if hud != null else get_tree().root
 	if parent_node == null:
 		return
 	var screen := App.get_layout_size()
-	for _i in range(OUTCOME_PARTICLE_COUNT):
+	var per_color := max(1, int(ceil(float(OUTCOME_PARTICLE_COUNT) / float(total))))
+	for _i in range(per_color):
 		var particle := OUTCOME_PARTICLE_SCENE.instantiate()
 		if particle == null:
 			continue
