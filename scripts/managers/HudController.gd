@@ -24,11 +24,11 @@ var hand_container: Container
 var card_data: Dictionary = {}
 var card_type_colors: Dictionary = {}
 var card_button_size: Vector2 = Vector2(110, 154)
-var card_art_textures: Dictionary = {}
+var card_emoji_font: Font
 const HAND_HOVER_SCALE: float = 1.18
 const HAND_HOVER_TIME: float = 0.08
 
-func setup(hud_nodes: Dictionary, data: Dictionary, type_colors: Dictionary, button_size: Vector2, art_textures: Dictionary) -> void:
+func setup(hud_nodes: Dictionary, data: Dictionary, type_colors: Dictionary, button_size: Vector2, emoji_font: Font) -> void:
 	energy_label = hud_nodes.get("energy_label")
 	deck_label = hud_nodes.get("deck_label")
 	discard_label = hud_nodes.get("discard_label")
@@ -49,7 +49,7 @@ func setup(hud_nodes: Dictionary, data: Dictionary, type_colors: Dictionary, but
 	card_data = data
 	card_type_colors = type_colors
 	card_button_size = button_size
-	card_art_textures = art_textures
+	card_emoji_font = emoji_font
 
 func hide_all_panels() -> void:
 	if map_panel:
@@ -163,11 +163,15 @@ func create_card_button(card_id: String) -> Button:
 	art_frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	layout.add_child(art_frame)
 
-	var art := TextureRect.new()
+	var art := Label.new()
 	art.name = "Art"
-	art.texture = _get_card_art(card_id)
-	art.expand_mode = TextureRect.EXPAND_FIT_HEIGHT
-	art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	art.text = _get_card_emoji(card_id)
+	art.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	art.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	art.autowrap_mode = TextServer.AUTOWRAP_OFF
+	art.add_theme_font_size_override("font_size", 50)
+	if card_emoji_font:
+		art.add_theme_font_override("font", card_emoji_font)
 	art.set_anchors_preset(Control.PRESET_FULL_RECT)
 	art.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	art_frame.add_child(art)
@@ -221,10 +225,12 @@ func _apply_card_button_size(button: Button) -> void:
 	button.custom_minimum_size = card_button_size
 	button.pivot_offset = card_button_size * 0.5
 
-func _get_card_art(card_id: String) -> Texture2D:
-	if card_art_textures.has(card_id):
-		return card_art_textures[card_id]
-	return card_art_textures["twin"]
+func _get_card_emoji(card_id: String) -> String:
+	var card: Dictionary = card_data.get(card_id, {})
+	var emoji: String = String(card.get("emoji", ""))
+	if emoji.is_empty():
+		return "❔"
+	return emoji
 
 func _clear_container(container: Node) -> void:
 	for child in container.get_children():
