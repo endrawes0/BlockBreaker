@@ -150,10 +150,16 @@ func _update_ball_color() -> void:
 	rect.color = color
 
 func _update_ghosts() -> void:
+	if not App.get_vfx_enabled():
+		return
+	var intensity: float = App.get_vfx_intensity()
+	if intensity <= 0.0:
+		return
 	if _ghost_last_pos == Vector2.ZERO:
 		_ghost_last_pos = position
 		return
-	if _ghost_last_pos.distance_to(position) < GHOST_SPACING:
+	var spacing: float = GHOST_SPACING / max(0.1, intensity)
+	if _ghost_last_pos.distance_to(position) < spacing:
 		return
 	_ghost_last_pos = position
 	_spawn_ghost()
@@ -168,7 +174,7 @@ func _spawn_ghost() -> void:
 	parent_node.add_child(ghost)
 	var ghost_rect := rect.duplicate() if rect else ColorRect.new()
 	var base_color := rect.color if rect else DEFAULT_MOD_COLOR
-	base_color.a = GHOST_ALPHA
+	base_color.a = clampf(GHOST_ALPHA * App.get_vfx_intensity(), 0.0, 1.0)
 	ghost_rect.color = base_color
 	ghost_rect.position = rect.position if rect else Vector2(-8, -8)
 	ghost_rect.size = rect.size if rect else Vector2(16, 16)

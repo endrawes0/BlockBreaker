@@ -3,7 +3,7 @@ extends Control
 @onready var start_button: Button = $Center/VBox/StartButton
 @onready var continue_button: Button = $Center/VBox/ContinueButton
 @onready var help_button: Button = $Center/VBox/HelpButton
-@onready var graphics_button: Button = $Center/VBox/GraphicsButton
+@onready var settings_button: Button = $Center/VBox/SettingsButton
 @onready var test_button: Button = $Center/VBox/TestButton
 @onready var quit_button: Button = $Center/VBox/QuitButton
 @onready var seed_dialog: ConfirmationDialog = $SeedDialog
@@ -25,7 +25,7 @@ func _ready() -> void:
 	start_button.pressed.connect(_open_seed_dialog)
 	continue_button.pressed.connect(_continue_run)
 	help_button.pressed.connect(_open_help)
-	graphics_button.pressed.connect(_open_graphics)
+	settings_button.pressed.connect(_open_settings)
 	test_button.pressed.connect(_open_test_lab)
 	quit_button.pressed.connect(_quit_game)
 	visibility_changed.connect(_update_continue_button)
@@ -90,8 +90,8 @@ func _continue_run() -> void:
 func _open_help() -> void:
 	App.show_help()
 
-func _open_graphics() -> void:
-	App.show_graphics()
+func _open_settings() -> void:
+	App.show_settings()
 
 func _open_test_lab() -> void:
 	App.show_test_lab()
@@ -157,8 +157,8 @@ func _menu_buttons() -> Array[Button]:
 		buttons.append(continue_button)
 	if help_button:
 		buttons.append(help_button)
-	if graphics_button:
-		buttons.append(graphics_button)
+	if settings_button:
+		buttons.append(settings_button)
 	if test_button and test_button.visible:
 		buttons.append(test_button)
 	if quit_button:

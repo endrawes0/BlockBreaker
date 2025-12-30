@@ -18,3 +18,4 @@ color = Color(0.95, 0.95, 1, 1)
 
 [node name="BounceSfx" type="AudioStreamPlayer" parent="."]
 volume_db = -8.0
+bus = "SFX"

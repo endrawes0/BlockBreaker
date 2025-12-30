@@ -1,11 +1,17 @@
 extends Control
 
-@onready var window_mode: OptionButton = $Center/VBox/WindowMode
-@onready var resolution: OptionButton = $Center/VBox/Resolution
+@onready var window_mode: OptionButton = $Center/VBox/Tabs/Visual/WindowMode
+@onready var resolution: OptionButton = $Center/VBox/Tabs/Visual/Resolution
+@onready var vfx_toggle: CheckBox = $Center/VBox/Tabs/Visual/VfxToggle
+@onready var vfx_intensity: HSlider = $Center/VBox/Tabs/Visual/VfxIntensity
+@onready var master_slider: HSlider = $Center/VBox/Tabs/Audio/MasterSlider
+@onready var music_slider: HSlider = $Center/VBox/Tabs/Audio/MusicSlider
+@onready var sfx_slider: HSlider = $Center/VBox/Tabs/Audio/SfxSlider
+@onready var ball_speed_slider: HSlider = $Center/VBox/Tabs/Gameplay/BallSpeedSlider
+@onready var paddle_assist_slider: HSlider = $Center/VBox/Tabs/Gameplay/PaddleAssistSlider
 @onready var back_button: Button = $Center/VBox/BackButton
 
 const MODE_LABELS: Array[String] = ["Windowed", "Fullscreen"]
-const SETTINGS_PATH: String = "user://settings.cfg"
 const RESOLUTIONS: Array[Vector2i] = [
 	Vector2i(640, 480),
 	Vector2i(1024, 576),
@@ -24,9 +30,19 @@ func _ready() -> void:
 	_build_resolution_options()
 	window_mode.item_selected.connect(_apply_window_mode)
 	resolution.item_selected.connect(_apply_resolution)
+	vfx_toggle.toggled.connect(_apply_vfx_toggle)
+	vfx_intensity.value_changed.connect(_apply_vfx_intensity)
+	master_slider.value_changed.connect(_apply_audio)
+	music_slider.value_changed.connect(_apply_audio)
+	sfx_slider.value_changed.connect(_apply_audio)
+	ball_speed_slider.value_changed.connect(_apply_gameplay)
+	paddle_assist_slider.value_changed.connect(_apply_gameplay)
 	back_button.pressed.connect(_back_to_menu)
 	_sync_window_mode()
 	_sync_resolution()
+	_sync_vfx()
+	_sync_audio()
+	_sync_gameplay()
 	App.bind_button_feedback(self)
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -41,29 +57,18 @@ func _sync_window_mode() -> void:
 	window_mode.select(index)
 
 func _apply_window_mode(index: int) -> void:
-	match index:
-		1:
-			DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
-		_:
-			DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
-			DisplayServer.window_set_flag(DisplayServer.WINDOW_FLAG_BORDERLESS, false)
-			DisplayServer.window_set_flag(DisplayServer.WINDOW_FLAG_RESIZE_DISABLED, false)
-	_apply_content_scale()
+	var mode: int = DisplayServer.WINDOW_MODE_FULLSCREEN if index == 1 else DisplayServer.WINDOW_MODE_WINDOWED
+	App.set_graphics_settings(mode, DisplayServer.window_get_size())
 	_update_resolution_enabled()
-	_save_graphics_settings()
 
 func _apply_resolution(index: int) -> void:
-	if DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN:
-		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
-		DisplayServer.window_set_flag(DisplayServer.WINDOW_FLAG_BORDERLESS, false)
-		DisplayServer.window_set_flag(DisplayServer.WINDOW_FLAG_RESIZE_DISABLED, false)
-		_update_resolution_enabled()
 	if index < 0 or index >= resolution_sizes.size():
 		return
+	if DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN:
+		window_mode.select(0)
 	var size: Vector2i = resolution_sizes[index]
-	DisplayServer.window_set_size(size)
-	_apply_content_scale()
-	_save_graphics_settings()
+	App.set_graphics_settings(DisplayServer.WINDOW_MODE_WINDOWED, size)
+	_update_resolution_enabled()
 
 func _sync_resolution() -> void:
 	var current: Vector2i = DisplayServer.window_get_size()
@@ -118,17 +123,39 @@ func _build_resolution_options() -> void:
 		resolution_sizes.append(item["size"])
 		resolution.add_item(item["label"])
 
-func _save_graphics_settings() -> void:
-	var config := ConfigFile.new()
-	config.load(SETTINGS_PATH)
-	config.set_value("graphics", "window_mode", DisplayServer.window_get_mode())
-	config.set_value("graphics", "resolution", DisplayServer.window_get_size())
-	config.save(SETTINGS_PATH)
+func _sync_vfx() -> void:
+	vfx_toggle.set_pressed_no_signal(App.get_vfx_enabled())
+	vfx_intensity.set_value_no_signal(App.get_vfx_intensity() * 100.0)
+	_update_vfx_intensity_enabled()
 
-func _apply_content_scale() -> void:
-	if get_tree() and get_tree().root:
-		var root := get_tree().root
-		root.content_scale_mode = Window.CONTENT_SCALE_MODE_CANVAS_ITEMS
-		root.content_scale_aspect = Window.CONTENT_SCALE_ASPECT_EXPAND
-		App.refresh_layout_cache()
-		root.content_scale_size = Vector2(App.get_layout_resolution())
+func _apply_vfx_toggle(enabled: bool) -> void:
+	App.set_vfx_enabled(enabled)
+	_update_vfx_intensity_enabled()
+
+func _apply_vfx_intensity(value: float) -> void:
+	App.set_vfx_intensity(value / 100.0)
+
+func _update_vfx_intensity_enabled() -> void:
+	vfx_intensity.editable = vfx_toggle.button_pressed
+
+func _sync_audio() -> void:
+	master_slider.set_value_no_signal(App.get_audio_master() * 100.0)
+	music_slider.set_value_no_signal(App.get_audio_music() * 100.0)
+	sfx_slider.set_value_no_signal(App.get_audio_sfx() * 100.0)
+
+func _apply_audio(_value: float) -> void:
+	App.set_audio_levels(
+		master_slider.value / 100.0,
+		music_slider.value / 100.0,
+		sfx_slider.value / 100.0
+	)
+
+func _sync_gameplay() -> void:
+	ball_speed_slider.set_value_no_signal(App.get_ball_speed_multiplier() * 100.0)
+	paddle_assist_slider.set_value_no_signal(App.get_paddle_speed_multiplier() * 100.0)
+
+func _apply_gameplay(_value: float) -> void:
+	App.set_gameplay_speed_settings(
+		ball_speed_slider.value / 100.0,
+		paddle_assist_slider.value / 100.0
+	)

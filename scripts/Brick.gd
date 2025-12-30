@@ -125,9 +125,10 @@ func _spawn_hit_particles(count: int) -> void:
 	var parent_node := get_parent()
 	if parent_node == null:
 		return
-	if count <= 0:
+	var scaled_count: int = App.get_vfx_count(count)
+	if scaled_count <= 0:
 		return
-	for _i in range(count):
+	for _i in range(scaled_count):
 		var particle := HIT_PARTICLE_SCENE.instantiate()
 		if particle == null:
 			continue

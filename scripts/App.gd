@@ -3,7 +3,7 @@ extends Node
 const MENU_SCENE: PackedScene = preload("res://scenes/MainMenu.tscn")
 const RUN_SCENE: PackedScene = preload("res://scenes/Main.tscn")
 const HELP_SCENE: PackedScene = preload("res://scenes/Help.tscn")
-const GRAPHICS_SCENE: PackedScene = preload("res://scenes/Graphics.tscn")
+const SETTINGS_SCENE: PackedScene = preload("res://scenes/Settings.tscn")
 const TEST_SCENE: PackedScene = preload("res://scenes/TestLab.tscn")
 const SETTINGS_PATH: String = "user://settings.cfg"
 const FALLBACK_BASE_RESOLUTION: Vector2i = Vector2i(800, 600)
@@ -20,7 +20,7 @@ const NEUTRAL_BUTTON_PRESSED: Color = Color(0.12, 0.12, 0.14)
 var menu_instance: Node = null
 var run_instance: Node = null
 var help_instance: Node = null
-var graphics_instance: Node = null
+var settings_instance: Node = null
 var test_instance: Node = null
 var _layout_resolution_cache: Vector2i = Vector2i.ZERO
 var _layout_size_cache: Vector2 = Vector2.ZERO
@@ -28,11 +28,20 @@ var _global_theme: Theme = null
 var _ui_particles_layer: CanvasLayer = null
 var _ui_particles_root: Node2D = null
 var _ui_particle_rng: RandomNumberGenerator = RandomNumberGenerator.new()
+var _settings_window_mode: int = DisplayServer.WINDOW_MODE_FULLSCREEN
+var _settings_resolution: Vector2i = Vector2i.ZERO
+var _settings_audio_master: float = 1.0
+var _settings_audio_music: float = 1.0
+var _settings_audio_sfx: float = 1.0
+var _settings_vfx_enabled: bool = true
+var _settings_vfx_intensity: float = 1.0
+var _settings_ball_speed_multiplier: float = 1.0
+var _settings_paddle_speed_multiplier: float = 1.0
 
 func _ready() -> void:
 	_ui_particle_rng.randomize()
 	_apply_global_theme()
-	_apply_saved_graphics()
+	_apply_saved_settings()
 	_refresh_layout_cache()
 	_connect_window_signals()
 	var current: Node = get_tree().current_scene
@@ -78,9 +87,9 @@ func show_help() -> void:
 	_ensure_help()
 	_switch_to_scene(help_instance)
 
-func show_graphics() -> void:
-	_ensure_graphics()
-	_switch_to_scene(graphics_instance)
+func show_settings() -> void:
+	_ensure_settings()
+	_switch_to_scene(settings_instance)
 
 func show_test_lab() -> void:
 	_ensure_test_lab()
@@ -111,43 +120,56 @@ func _show_menu_overlay() -> void:
 		root.move_child(menu_instance, root.get_child_count() - 1)
 
 func _all_scene_instances() -> Array[Node]:
-	return [menu_instance, run_instance, help_instance, graphics_instance, test_instance]
+	return [menu_instance, run_instance, help_instance, settings_instance, test_instance]
 
 func _ensure_help() -> void:
 	if help_instance == null or not is_instance_valid(help_instance):
 		help_instance = HELP_SCENE.instantiate()
 		get_tree().root.add_child(help_instance)
 
-func _ensure_graphics() -> void:
-	if graphics_instance == null or not is_instance_valid(graphics_instance):
-		graphics_instance = GRAPHICS_SCENE.instantiate()
-		get_tree().root.add_child(graphics_instance)
+func _ensure_settings() -> void:
+	if settings_instance == null or not is_instance_valid(settings_instance):
+		settings_instance = SETTINGS_SCENE.instantiate()
+		get_tree().root.add_child(settings_instance)
 
 func _ensure_test_lab() -> void:
 	if test_instance == null or not is_instance_valid(test_instance):
 		test_instance = TEST_SCENE.instantiate()
 		get_tree().root.add_child(test_instance)
 
-func _apply_saved_graphics() -> void:
+func _apply_saved_settings() -> void:
 	var config := ConfigFile.new()
 	var err: int = config.load(SETTINGS_PATH)
-	var window_mode: int = DisplayServer.WINDOW_MODE_FULLSCREEN
-	var resolution: Vector2i = DisplayServer.screen_get_size()
+	_settings_window_mode = DisplayServer.WINDOW_MODE_FULLSCREEN
+	_settings_resolution = DisplayServer.screen_get_size()
+	_settings_audio_master = 1.0
+	_settings_audio_music = 1.0
+	_settings_audio_sfx = 1.0
+	_settings_vfx_enabled = true
+	_settings_vfx_intensity = 1.0
+	_settings_ball_speed_multiplier = 1.0
+	_settings_paddle_speed_multiplier = 1.0
 	if err == OK:
-		window_mode = int(config.get_value("graphics", "window_mode", window_mode))
-		var saved: Vector2i = config.get_value("graphics", "resolution", resolution)
+		_settings_window_mode = int(config.get_value("graphics", "window_mode", _settings_window_mode))
+		var saved: Vector2i = config.get_value("graphics", "resolution", _settings_resolution)
 		if saved.x > 0 and saved.y > 0:
-			resolution = saved
-	DisplayServer.window_set_mode(window_mode)
-	if window_mode == DisplayServer.WINDOW_MODE_WINDOWED:
-		DisplayServer.window_set_flag(DisplayServer.WINDOW_FLAG_BORDERLESS, false)
-		DisplayServer.window_set_flag(DisplayServer.WINDOW_FLAG_RESIZE_DISABLED, false)
-		DisplayServer.window_set_size(resolution)
-	if get_tree() and get_tree().root:
-		var root := get_tree().root
-		root.content_scale_mode = Window.CONTENT_SCALE_MODE_CANVAS_ITEMS
-		root.content_scale_aspect = Window.CONTENT_SCALE_ASPECT_EXPAND
-		root.content_scale_size = Vector2(get_layout_resolution())
+			_settings_resolution = saved
+		_settings_audio_master = float(config.get_value("audio", "master", _settings_audio_master))
+		_settings_audio_music = float(config.get_value("audio", "music", _settings_audio_music))
+		_settings_audio_sfx = float(config.get_value("audio", "sfx", _settings_audio_sfx))
+		_settings_vfx_enabled = bool(config.get_value("visual", "vfx_enabled", _settings_vfx_enabled))
+		_settings_vfx_intensity = float(config.get_value("visual", "vfx_intensity", _settings_vfx_intensity))
+		_settings_ball_speed_multiplier = float(config.get_value("gameplay", "ball_speed_multiplier", _settings_ball_speed_multiplier))
+		_settings_paddle_speed_multiplier = float(config.get_value("gameplay", "paddle_speed_multiplier", _settings_paddle_speed_multiplier))
+	_settings_audio_master = clampf(_settings_audio_master, 0.0, 1.0)
+	_settings_audio_music = clampf(_settings_audio_music, 0.0, 1.0)
+	_settings_audio_sfx = clampf(_settings_audio_sfx, 0.0, 1.0)
+	_settings_vfx_intensity = clampf(_settings_vfx_intensity, 0.0, 1.0)
+	_settings_ball_speed_multiplier = clampf(_settings_ball_speed_multiplier, 0.5, 1.5)
+	_settings_paddle_speed_multiplier = clampf(_settings_paddle_speed_multiplier, 0.5, 1.5)
+	_ensure_audio_buses()
+	_apply_audio_settings()
+	_apply_graphics_settings()
 
 func _apply_global_theme() -> void:
 	if get_tree() == null or get_tree().root == null:
@@ -201,12 +223,13 @@ func _button_particle_color(button: Control) -> Color:
 	return button.get_theme_color("font_color", "Button")
 
 func _spawn_button_particles(position: Vector2, color: Color, count: int) -> void:
-	if count <= 0:
+	var scaled_count: int = get_vfx_count(count)
+	if scaled_count <= 0:
 		return
 	_ensure_ui_particles_root()
 	if _ui_particles_root == null:
 		return
-	for _i in range(count):
+	for _i in range(scaled_count):
 		var particle := UI_PARTICLE_SCENE.instantiate()
 		if particle == null:
 			continue
@@ -311,3 +334,117 @@ func _connect_window_signals() -> void:
 		var root := get_tree().root
 		if not root.size_changed.is_connected(_refresh_layout_cache):
 			root.size_changed.connect(_refresh_layout_cache)
+
+func _apply_graphics_settings() -> void:
+	DisplayServer.window_set_mode(_settings_window_mode)
+	if _settings_window_mode == DisplayServer.WINDOW_MODE_WINDOWED:
+		DisplayServer.window_set_flag(DisplayServer.WINDOW_FLAG_BORDERLESS, false)
+		DisplayServer.window_set_flag(DisplayServer.WINDOW_FLAG_RESIZE_DISABLED, false)
+		if _settings_resolution.x > 0 and _settings_resolution.y > 0:
+			DisplayServer.window_set_size(_settings_resolution)
+	if get_tree() and get_tree().root:
+		var root := get_tree().root
+		root.content_scale_mode = Window.CONTENT_SCALE_MODE_CANVAS_ITEMS
+		root.content_scale_aspect = Window.CONTENT_SCALE_ASPECT_EXPAND
+		root.content_scale_size = Vector2(get_layout_resolution())
+
+func _ensure_audio_buses() -> void:
+	_ensure_audio_bus("Music")
+	_ensure_audio_bus("SFX")
+
+func _ensure_audio_bus(name: String) -> void:
+	var index: int = AudioServer.get_bus_index(name)
+	if index != -1:
+		return
+	AudioServer.add_bus(AudioServer.get_bus_count())
+	index = AudioServer.get_bus_count() - 1
+	AudioServer.set_bus_name(index, name)
+	AudioServer.set_bus_send(index, "Master")
+
+func _apply_audio_settings() -> void:
+	_apply_bus_volume("Master", _settings_audio_master)
+	_apply_bus_volume("Music", _settings_audio_music)
+	_apply_bus_volume("SFX", _settings_audio_sfx)
+
+func _apply_bus_volume(name: String, value: float) -> void:
+	var index: int = AudioServer.get_bus_index(name)
+	if index == -1:
+		return
+	var db: float = -80.0 if value <= 0.0 else linear_to_db(value)
+	AudioServer.set_bus_volume_db(index, db)
+
+func _save_settings() -> void:
+	var config := ConfigFile.new()
+	config.load(SETTINGS_PATH)
+	config.set_value("graphics", "window_mode", _settings_window_mode)
+	config.set_value("graphics", "resolution", _settings_resolution)
+	config.set_value("audio", "master", _settings_audio_master)
+	config.set_value("audio", "music", _settings_audio_music)
+	config.set_value("audio", "sfx", _settings_audio_sfx)
+	config.set_value("visual", "vfx_enabled", _settings_vfx_enabled)
+	config.set_value("visual", "vfx_intensity", _settings_vfx_intensity)
+	config.set_value("gameplay", "ball_speed_multiplier", _settings_ball_speed_multiplier)
+	config.set_value("gameplay", "paddle_speed_multiplier", _settings_paddle_speed_multiplier)
+	config.save(SETTINGS_PATH)
+
+func set_graphics_settings(window_mode: int, resolution: Vector2i) -> void:
+	_settings_window_mode = window_mode
+	if resolution.x > 0 and resolution.y > 0:
+		_settings_resolution = resolution
+	_apply_graphics_settings()
+	_save_settings()
+
+func get_graphics_window_mode() -> int:
+	return _settings_window_mode
+
+func get_graphics_resolution() -> Vector2i:
+	return _settings_resolution
+
+func set_audio_levels(master: float, music: float, sfx: float) -> void:
+	_settings_audio_master = clampf(master, 0.0, 1.0)
+	_settings_audio_music = clampf(music, 0.0, 1.0)
+	_settings_audio_sfx = clampf(sfx, 0.0, 1.0)
+	_apply_audio_settings()
+	_save_settings()
+
+func get_audio_master() -> float:
+	return _settings_audio_master
+
+func get_audio_music() -> float:
+	return _settings_audio_music
+
+func get_audio_sfx() -> float:
+	return _settings_audio_sfx
+
+func set_vfx_enabled(enabled: bool) -> void:
+	_settings_vfx_enabled = enabled
+	_save_settings()
+
+func set_vfx_intensity(intensity: float) -> void:
+	_settings_vfx_intensity = clampf(intensity, 0.0, 1.0)
+	_save_settings()
+
+func get_vfx_enabled() -> bool:
+	return _settings_vfx_enabled
+
+func get_vfx_intensity() -> float:
+	return _settings_vfx_intensity
+
+func get_vfx_count(base_count: int) -> int:
+	if not _settings_vfx_enabled:
+		return 0
+	return int(round(float(base_count) * _settings_vfx_intensity))
+
+func set_gameplay_speed_settings(ball_multiplier: float, paddle_multiplier: float) -> void:
+	_settings_ball_speed_multiplier = clampf(ball_multiplier, 0.5, 1.5)
+	_settings_paddle_speed_multiplier = clampf(paddle_multiplier, 0.5, 1.5)
+	_save_settings()
+	if run_instance and is_instance_valid(run_instance):
+		if run_instance.has_method("apply_gameplay_settings"):
+			run_instance.apply_gameplay_settings()
+
+func get_ball_speed_multiplier() -> float:
+	return _settings_ball_speed_multiplier
+
+func get_paddle_speed_multiplier() -> float:
+	return _settings_paddle_speed_multiplier
