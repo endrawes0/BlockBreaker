@@ -156,6 +156,7 @@ var hud_layer_cache: int = 0
 var base_paddle_half_width: float = 50.0
 var paddle_buff_turns: int = 0
 var base_paddle_speed: float = 420.0
+var paddle_speed_setting_multiplier: float = 1.0
 var paddle_speed_buff_turns: int = 0
 var paddle_speed_multiplier: float = 1.3
 
@@ -188,7 +189,9 @@ func _ready() -> void:
 		get_viewport().size_changed.connect(_fit_to_viewport)
 	_fit_to_viewport()
 	base_paddle_half_width = paddle.half_width
-	base_paddle_speed = paddle.speed
+	paddle_speed_setting_multiplier = App.get_paddle_speed_multiplier()
+	base_paddle_speed = paddle.speed * paddle_speed_setting_multiplier
+	paddle.speed = base_paddle_speed
 	encounter_manager = EncounterManager.new()
 	add_child(encounter_manager)
 	encounter_manager.setup(bricks_root, brick_scene, brick_size, brick_gap, top_margin, ROW_PALETTE)
@@ -788,6 +791,7 @@ func _spawn_volley_ball() -> void:
 	var speed_multiplier: float = volley_ball_speed_multiplier
 	if encounter_speed_boost:
 		speed_multiplier *= 1.25
+	speed_multiplier *= App.get_ball_speed_multiplier()
 	ball.speed *= speed_multiplier
 	if ball.has_method("set_mod_colors"):
 		ball.set_mod_colors(ball_mod_colors)
@@ -930,7 +934,6 @@ func _apply_hud_button_exclusions() -> void:
 		discard_button.theme = blank
 		discard_button.add_to_group(App.UI_PARTICLE_IGNORE_GROUP)
 	if mods_persist_checkbox:
-		App.apply_neutral_button_style_no_hover(mods_persist_checkbox)
 		mods_persist_checkbox.add_to_group(App.UI_PARTICLE_IGNORE_GROUP)
 func _show_treasure() -> void:
 	_show_treasure_panel()
@@ -1259,6 +1262,9 @@ func _show_outcome_overlay(is_victory: bool) -> void:
 		_spawn_outcome_particles(Color(0.35, 0.1, 0.1, 1), false)
 
 func _spawn_victory_particles() -> void:
+	var base_count: int = App.get_vfx_count(OUTCOME_PARTICLE_COUNT)
+	if base_count <= 0:
+		return
 	var palette: Array[Color] = [
 		Color(0.86, 0.32, 0.26, 1),
 		Color(0.95, 0.60, 0.20, 1),
@@ -1267,7 +1273,7 @@ func _spawn_victory_particles() -> void:
 		Color(0.26, 0.62, 0.96, 1)
 	]
 	var screen: Vector2 = App.get_layout_size()
-	var total: int = OUTCOME_PARTICLE_COUNT * 9
+	var total: int = base_count * 9
 	var clusters_per_color: int = 3
 	var per_cluster: int = max(1, int(ceil(float(total) / float(palette.size() * clusters_per_color))))
 	for i in range(palette.size()):
@@ -1303,13 +1309,14 @@ func _spawn_outcome_particle_cluster(color: Color, count: int, center: Vector2, 
 			particle.call("setup", color, velocity)
 
 func _spawn_outcome_particles(color: Color, is_victory: bool, index: int = 0, total: int = 1) -> void:
-	if OUTCOME_PARTICLE_COUNT <= 0:
+	var vfx_count: int = App.get_vfx_count(OUTCOME_PARTICLE_COUNT)
+	if vfx_count <= 0:
 		return
 	var parent_node: Node = hud if hud != null else get_tree().root
 	if parent_node == null:
 		return
 	var screen: Vector2 = App.get_layout_size()
-	var per_color: int = max(1, int(ceil(float(OUTCOME_PARTICLE_COUNT) / float(total))))
+	var per_color: int = max(1, int(ceil(float(vfx_count) / float(total))))
 	for _i in range(per_color):
 		var particle := OUTCOME_PARTICLE_SCENE.instantiate()
 		if particle == null:
@@ -1341,6 +1348,20 @@ func _go_to_menu() -> void:
 	if mods_panel:
 		mods_panel.visible = false
 	App.show_menu()
+
+func apply_gameplay_settings() -> void:
+	var new_multiplier: float = App.get_paddle_speed_multiplier()
+	if new_multiplier <= 0.0:
+		return
+	if paddle_speed_setting_multiplier <= 0.0:
+		paddle_speed_setting_multiplier = 1.0
+	var was_buffed: bool = paddle_speed_buff_turns > 0
+	base_paddle_speed = base_paddle_speed / paddle_speed_setting_multiplier * new_multiplier
+	paddle_speed_setting_multiplier = new_multiplier
+	if was_buffed:
+		paddle.speed = base_paddle_speed * paddle_speed_multiplier
+	else:
+		paddle.speed = base_paddle_speed
 
 func on_menu_opened() -> void:
 	process_mode = Node.PROCESS_MODE_DISABLED

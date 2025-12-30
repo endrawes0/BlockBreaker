@@ -43,6 +43,8 @@ content_margin_right = 8.0
 content_margin_bottom = 6.0
 bg_color = Color(0.11, 0.11, 0.13, 1)
 
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_7nm5m"]
+
 [resource]
 default_font_size = 14
 Button/colors/font_color = Color(0.96, 0.96, 0.98, 1)
@@ -54,6 +56,12 @@ Button/styles/focus = SubResource("StyleBoxFlat_focus")
 Button/styles/hover = SubResource("StyleBoxFlat_xxbg1")
 Button/styles/normal = SubResource("StyleBoxFlat_gfhtu")
 Button/styles/pressed = SubResource("StyleBoxFlat_qa7hf")
+CheckBox/colors/font_hover_color = Color(0.94, 0.94, 0.98, 1)
+CheckBox/styles/disabled = SubResource("StyleBoxEmpty_7nm5m")
+CheckBox/styles/focus = SubResource("StyleBoxFlat_focus")
+CheckBox/styles/hover = SubResource("StyleBoxEmpty_7nm5m")
+CheckBox/styles/normal = SubResource("StyleBoxEmpty_7nm5m")
+CheckBox/styles/pressed = SubResource("StyleBoxEmpty_7nm5m")
 Label/colors/font_color = Color(0.94, 0.94, 0.98, 1)
 Panel/styles/panel = SubResource("StyleBoxFlat_jkgan")
 PanelContainer/styles/panel = SubResource("StyleBoxFlat_jkgan")
