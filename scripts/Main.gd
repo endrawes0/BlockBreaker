@@ -25,6 +25,7 @@ const FLOOR_PLAN_GENERATOR_CONFIG_PATH: String = "res://data/floor_plans/generat
 const FLOOR_PLAN_GENERATOR := preload("res://scripts/data/FloorPlanGenerator.gd")
 const FLOOR_PLAN_GENERATOR_CONFIG := preload("res://scripts/data/FloorPlanGeneratorConfig.gd")
 const BALANCE_DATA_PATH: String = "res://data/balance/basic.tres"
+const EMOJI_FONT_PATH: String = "res://assets/fonts/NotoColorEmoji.ttf"
 const OUTCOME_PARTICLE_SCENE: PackedScene = preload("res://scenes/HitParticle.tscn")
 const OUTCOME_PARTICLE_COUNT: int = 18
 const OUTCOME_PARTICLE_SPEED_X: Vector2 = Vector2(-80.0, 80.0)
@@ -91,7 +92,7 @@ const OUTCOME_PARTICLE_SPEED_Y_DEFEAT: Vector2 = Vector2(40.0, 200.0)
 
 var brick_scene: PackedScene = preload("res://scenes/Brick.tscn")
 var ball_scene: PackedScene = preload("res://scenes/Ball.tscn")
-var card_art_textures: Dictionary = {}
+var card_emoji_font: Font
 var floor_plan_generator_config: Resource
 var pending_seed: int = 0
 var has_pending_seed_override: bool = false
@@ -211,6 +212,7 @@ func _ready() -> void:
 	add_child(deck_manager)
 	hud_controller = HudController.new()
 	add_child(hud_controller)
+	card_emoji_font = load(EMOJI_FONT_PATH)
 	hud_controller.setup({
 		"energy_label": energy_label,
 		"deck_label": deck_label,
@@ -229,7 +231,7 @@ func _ready() -> void:
 		"deck_panel": deck_panel,
 		"gameover_panel": gameover_panel,
 		"hand_container": hand_container
-	}, card_data, CARD_TYPE_COLORS, CARD_BUTTON_SIZE, card_art_textures)
+	}, card_data, CARD_TYPE_COLORS, CARD_BUTTON_SIZE, card_emoji_font)
 	_apply_hud_theme()
 	App.bind_button_feedback(self)
 	# Buttons removed; use Space to launch and cards/turn flow for control.
@@ -294,15 +296,6 @@ func _apply_balance_data(data: Resource) -> void:
 	shop_vitality_heal = data.shop_vitality_heal
 	shop_reroll_base_price = data.shop_reroll_base_price
 	shop_reroll_multiplier = data.shop_reroll_multiplier
-	card_art_textures.clear()
-	for card_id in card_data.keys():
-		var entry: Dictionary = card_data[card_id]
-		var art_path: String = String(entry.get("art_path", ""))
-		if art_path.is_empty():
-			continue
-		var texture := load(art_path)
-		if texture:
-			card_art_textures[card_id] = texture
 
 func _fit_to_viewport() -> void:
 	var size: Vector2 = App.get_layout_size()

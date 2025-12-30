@@ -161,7 +161,7 @@ func _layout_positions(room_index: Dictionary, depths: Dictionary, source_rooms:
 			depth_groups[depth] = []
 		depth_groups[depth].append(room_id)
 	var size: Vector2 = get_size()
-	var margin: float = 16.0
+	var margin: float = 6.0
 	var usable_height: float = max(1.0, size.y - margin * 2.0)
 	var depth_count: int = max(1, max_depth + 1)
 	var row_spacing: float = 0.0
@@ -225,7 +225,7 @@ func _draw_nodes(room_index: Dictionary, positions: Dictionary) -> void:
 		if room_id in choice_ids:
 			draw_arc(pos, radius + 6.0, 0.0, TAU, 48, Color(0.95, 0.85, 0.2), 2.0)
 		var label: String = String(TYPE_LABELS.get(room_type, "?"))
-		var font_size: int = 14
+		var font_size: int = 18
 		if room_type in ["elite", "rest", "shop"]:
 			font_size = int(round(float(font_size) * 1.3))
 		var text_size: Vector2 = font.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size)
@@ -239,7 +239,7 @@ func _draw_nodes(room_index: Dictionary, positions: Dictionary) -> void:
 
 func _node_radius() -> float:
 	var size: Vector2 = get_size()
-	return clamp(min(size.x, size.y) * 0.045, 8.0, 14.0)
+	return clamp(min(size.x, size.y) * 0.045, 10.0, 18.0)
 
 func _resolve_next_ids(room: Dictionary) -> Array[String]:
 	var resolved: Array[String] = []
