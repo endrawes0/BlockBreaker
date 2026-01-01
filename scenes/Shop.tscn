@@ -57,6 +57,7 @@ text = "Buffs"
 
 [node name="BuffsButtons" type="VBoxContainer" parent="ShopLayout/BuffsPanel"]
 layout_mode = 2
+theme_override_constants/separation = 8
 
 [node name="BallModsPanel" type="VBoxContainer" parent="ShopLayout"]
 layout_mode = 1
@@ -75,6 +76,7 @@ text = "Ball Mods"
 
 [node name="BallModsButtons" type="VBoxContainer" parent="ShopLayout/BallModsPanel"]
 layout_mode = 2
+theme_override_constants/separation = 8
 
 [node name="CardsPanel" type="VBoxContainer" parent="ShopLayout"]
 layout_mode = 1
@@ -95,6 +97,7 @@ text = "Cards"
 
 [node name="CardsButtons" type="HBoxContainer" parent="ShopLayout/CardsPanel"]
 layout_mode = 2
+theme_override_constants/separation = 8
 
 [node name="LeaveButton" type="Button" parent="."]
 layout_mode = 0

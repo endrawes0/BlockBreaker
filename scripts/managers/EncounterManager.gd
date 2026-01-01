@@ -90,7 +90,7 @@ func calculate_threat(base_threat: int) -> int:
 	return total + base_threat
 
 func check_victory() -> bool:
-	return bricks_root == null or bricks_root.get_child_count() == 0
+	return calculate_threat(0) <= 0
 
 func regen_bricks_on_drop() -> void:
 	if bricks_root == null:
