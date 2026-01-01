@@ -1343,23 +1343,26 @@ func _discard_hand() -> void:
 func _refresh_hand() -> void:
 	hud_controller.refresh_hand(deck_manager.hand, state != GameState.PLANNING, Callable(self, "_play_card"))
 
-func _play_card(card_id: String) -> void:
+func _play_card(instance_id: int) -> void:
 	if state != GameState.PLANNING:
+		return
+	var card_id: String = deck_manager.get_card_id_from_hand(instance_id)
+	if card_id == "":
 		return
 	var cost: int = card_data[card_id]["cost"]
 	if energy < cost:
 		info_label.text = "Not enough energy."
 		return
 	energy -= cost
-	_apply_card_effect(card_id)
-	if card_id != "wound":
-		deck_manager.discard_card(card_id)
-	deck_manager.play_card(card_id)
+	var should_discard: bool = _apply_card_effect(card_id, instance_id)
+	if should_discard:
+		deck_manager.discard_card_instance(instance_id)
 	_refresh_hand()
 	_update_reserve_indicator()
 	_update_labels()
 
-func _apply_card_effect(card_id: String) -> void:
+func _apply_card_effect(card_id: String, instance_id: int) -> bool:
+	var should_discard := true
 	match card_id:
 		"punch":
 			volley_damage_bonus += 1
@@ -1382,8 +1385,10 @@ func _apply_card_effect(card_id: String) -> void:
 		"slow":
 			volley_ball_speed_multiplier = 0.7
 		"wound":
-			deck_manager.remove_card_from_deck("wound")
+			deck_manager.remove_card_instance_from_all(instance_id, true)
 			info_label.text = "Wound removed from your deck."
+			should_discard = false
+	return should_discard
 		_:
 			pass
 
@@ -1621,10 +1626,11 @@ func _show_remove_card_panel() -> void:
 	info_label.text = "Choose a card to remove."
 	hud_controller.populate_card_container(deck_list, deck_manager.deck, Callable(self, "_on_remove_card_selected"), false, 5)
 
-func _on_remove_card_selected(card_id: String) -> void:
-	deck_manager.remove_card_from_all(card_id, true)
+func _on_remove_card_selected(instance_id: int) -> void:
+	var card_id: String = deck_manager.get_card_id_for_instance(instance_id)
+	deck_manager.remove_card_instance_from_all(instance_id, true)
 	_refresh_hand()
-	var card_name: String = card_data[card_id]["name"]
+	var card_name: String = card_data.get(card_id, {}).get("name", card_id)
 	deck_return_info = "Removed %s." % card_name
 	_close_deck_panel()
 
