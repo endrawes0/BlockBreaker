@@ -85,7 +85,7 @@ ball_mod_data = {
 "name": "Explosives"
 },
 "miracle": {
-"cost": 60,
+"cost": 75,
 "desc": "One floor bounce per ball.",
 "name": "Miracle"
 },
@@ -101,3 +101,5 @@ ball_mod_colors = {
 "miracle": Color(0.45, 0.75, 1, 1),
 "spikes": Color(0.95, 0.85, 0.25, 1)
 }
+shop_vitality_max_hp_bonus = 25
+shop_vitality_heal = 30

@@ -36,6 +36,10 @@ stretch/aspect="expand"
 
 theme/custom="res://themes/ui_theme.tres"
 
+[physics]
+
+3d/icon="uid://jeiyddp2jfsv"
+
 [rendering]
 
 textures/vram_compression/import_s3tc_bptc=true

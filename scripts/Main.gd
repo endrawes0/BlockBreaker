@@ -399,6 +399,10 @@ func _set_hud_tooltips() -> void:
 	info_label.mouse_filter = Control.MOUSE_FILTER_STOP
 	info_label.tooltip_text = "Status and prompts for the current room."
 
+func _input(event: InputEvent) -> void:
+	if event is InputEventMouseMotion:
+		Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
 		if map_preview_active:
@@ -408,6 +412,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			_close_deck_panel()
 			return
 		App.show_menu()
+		get_viewport().set_input_as_handled()
+		return
 	if event is InputEventKey and event.is_pressed() and not event.is_echo():
 		var preview_key: InputEventKey = event
 		if preview_key.keycode == KEY_M:
@@ -419,17 +425,15 @@ func _unhandled_input(event: InputEvent) -> void:
 		if key_event.keycode in [KEY_ENTER, KEY_KP_ENTER]:
 			if state == GameState.VOLLEY and active_balls.is_empty() and volley_ball_reserve > 0:
 				_prompt_forfeit_volley()
-				return
+			#early return for ENTER - regardless of context
+			#avoids ui_accept mapping trigger
+			return
 	if state == GameState.PLANNING and event.is_action_pressed("ui_accept"):
 		_launch_volley()
-	if state == GameState.VOLLEY and event.is_action_pressed("ui_select") and active_balls.is_empty() and volley_ball_reserve > 0:
-		_prompt_forfeit_volley()
+		get_viewport().set_input_as_handled()
 	if state == GameState.VOLLEY and event.is_action_pressed("ui_accept") and reserve_launch_cooldown <= 0.0:
-		if event is InputEventKey:
-			var launch_key: InputEventKey = event
-			if launch_key.keycode in [KEY_ENTER, KEY_KP_ENTER]:
-				return
 		_launch_reserve_ball()
+		get_viewport().set_input_as_handled()
 	if state == GameState.PLANNING and event.is_action_pressed("ui_select"):
 		_end_turn()
 
@@ -798,6 +802,8 @@ func _spawn_volley_ball() -> void:
 	ball.lost.connect(_on_ball_lost)
 	ball.mod_consumed.connect(_on_ball_mod_consumed)
 	active_balls.append(ball)
+	Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
+
 
 func _on_ball_lost(ball: Node) -> void:
 	active_balls.erase(ball)
@@ -1394,7 +1400,7 @@ func _on_brick_destroyed(_brick: Node) -> void:
 				if _brick is Node2D:
 					_spawn_wound_flyout((_brick as Node2D).global_position)
 				_update_labels()
-	if encounter_manager.check_victory() and (state == GameState.VOLLEY or state == GameState.PLANNING):
+	if encounter_manager.check_victory():
 		_end_encounter()
 
 func _on_brick_damaged(_brick: Node) -> void:

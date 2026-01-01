@@ -8,7 +8,7 @@ extends Control
 @onready var music_slider: HSlider = $Center/VBox/Tabs/Audio/MusicSlider
 @onready var sfx_slider: HSlider = $Center/VBox/Tabs/Audio/SfxSlider
 @onready var ball_speed_slider: HSlider = $Center/VBox/Tabs/Gameplay/BallSpeedSlider
-@onready var paddle_assist_slider: HSlider = $Center/VBox/Tabs/Gameplay/PaddleAssistSlider
+@onready var paddle_speed_slider: HSlider = $Center/VBox/Tabs/Gameplay/PaddleSpeedSlider
 @onready var back_button: Button = $Center/VBox/BackButton
 
 const MODE_LABELS: Array[String] = ["Windowed", "Fullscreen"]
@@ -36,7 +36,7 @@ func _ready() -> void:
 	music_slider.value_changed.connect(_apply_audio)
 	sfx_slider.value_changed.connect(_apply_audio)
 	ball_speed_slider.value_changed.connect(_apply_gameplay)
-	paddle_assist_slider.value_changed.connect(_apply_gameplay)
+	paddle_speed_slider.value_changed.connect(_apply_gameplay)
 	back_button.pressed.connect(_back_to_menu)
 	_sync_window_mode()
 	_sync_resolution()
@@ -152,10 +152,10 @@ func _apply_audio(_value: float) -> void:
 
 func _sync_gameplay() -> void:
 	ball_speed_slider.set_value_no_signal(App.get_ball_speed_multiplier() * 100.0)
-	paddle_assist_slider.set_value_no_signal(App.get_paddle_speed_multiplier() * 100.0)
+	paddle_speed_slider.set_value_no_signal(App.get_paddle_speed_multiplier() * 100.0)
 
 func _apply_gameplay(_value: float) -> void:
 	App.set_gameplay_speed_settings(
 		ball_speed_slider.value / 100.0,
-		paddle_assist_slider.value / 100.0
+		paddle_speed_slider.value / 100.0
 	)

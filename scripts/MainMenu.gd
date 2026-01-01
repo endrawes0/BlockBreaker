@@ -172,4 +172,6 @@ func _make_button_box(color: Color) -> StyleBoxFlat:
 	box.content_margin_top = 6
 	box.content_margin_right = 10
 	box.content_margin_bottom = 6
+	box.shadow_color = Color.WHITE
+	box.shadow_size = 2
 	return box
