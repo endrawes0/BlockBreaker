@@ -40,6 +40,7 @@ var _settings_paddle_speed_multiplier: float = 1.0
 
 func _ready() -> void:
 	_ui_particle_rng.randomize()
+	_ensure_paddle_keyboard_inputs()
 	_apply_global_theme()
 	_apply_saved_settings()
 	_refresh_layout_cache()
@@ -47,6 +48,25 @@ func _ready() -> void:
 	var current: Node = get_tree().current_scene
 	if current and current.scene_file_path == "res://scenes/MainMenu.tscn":
 		menu_instance = current
+
+func _ensure_paddle_keyboard_inputs() -> void:
+	_ensure_action_key("ui_left", KEY_A)
+	_ensure_action_key("ui_right", KEY_D)
+
+func _ensure_action_key(action: String, keycode: int) -> void:
+	if not InputMap.has_action(action):
+		InputMap.add_action(action)
+	if _action_has_key(action, keycode):
+		return
+	var event := InputEventKey.new()
+	event.keycode = keycode
+	InputMap.action_add_event(action, event)
+
+func _action_has_key(action: String, keycode: int) -> bool:
+	for event in InputMap.action_get_events(action):
+		if event is InputEventKey and (event as InputEventKey).keycode == keycode:
+			return true
+	return false
 
 func has_run() -> bool:
 	return run_instance != null and is_instance_valid(run_instance)

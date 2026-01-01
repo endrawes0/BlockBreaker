@@ -132,6 +132,21 @@ offset_right = -16.0
 offset_bottom = 62.0
 text = "Choose your next room."
 
+[node name="VolleyPromptLabel" type="RichTextLabel" parent="HUD"]
+anchors_preset = 10
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -220.0
+offset_right = 220.0
+custom_minimum_size = Vector2(360, 0)
+mouse_filter = 2
+bbcode_enabled = true
+fit_content = true
+autowrap_mode = 0
+horizontal_alignment = 1
+text = "Press [b]Spacebar[/b] to start your volley..."
+visible = false
+
 [node name="VictoryOverlay" type="ColorRect" parent="HUD"]
 visible = false
 z_index = -1

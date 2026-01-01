@@ -31,6 +31,7 @@ const OUTCOME_PARTICLE_COUNT: int = 18
 const OUTCOME_PARTICLE_SPEED_X: Vector2 = Vector2(-80.0, 80.0)
 const OUTCOME_PARTICLE_SPEED_Y_VICTORY: Vector2 = Vector2(-220.0, -60.0)
 const OUTCOME_PARTICLE_SPEED_Y_DEFEAT: Vector2 = Vector2(40.0, 200.0)
+const VOLLEY_PROMPT_OFFSET_Y: float = -70.0
 
 @export var brick_size: Vector2 = Vector2(64, 24)
 @export var brick_gap: Vector2 = Vector2(8, 8)
@@ -53,6 +54,7 @@ const OUTCOME_PARTICLE_SPEED_Y_DEFEAT: Vector2 = Vector2(40.0, 200.0)
 @onready var threat_label: Label = $HUD/TopBar/ThreatLabel
 @onready var floor_label: Label = $HUD/TopBar/FloorLabel
 @onready var info_label: Label = $HUD/InfoLabel
+@onready var volley_prompt_label: RichTextLabel = $HUD/VolleyPromptLabel
 @onready var victory_overlay: ColorRect = $HUD/VictoryOverlay
 @onready var defeat_overlay: ColorRect = $HUD/DefeatOverlay
 @onready var mods_panel: Panel = $HUD/ModsPanel
@@ -171,6 +173,8 @@ var current_pattern: String = "grid"
 var encounter_speed_boost: bool = false
 var deck_return_panel: int = ReturnPanel.NONE
 var deck_return_info: String = ""
+var volley_prompt_tween: Tween = null
+var volley_prompt_pulsing: bool = false
 
 func _update_reserve_indicator() -> void:
 	if paddle and paddle.has_method("set_reserve_count"):
@@ -304,6 +308,7 @@ func _fit_to_viewport() -> void:
 	paddle.position = Vector2(size.x * 0.5, size.y - 240.0)
 	if paddle.has_method("set_locked_y"):
 		paddle.set_locked_y(paddle.position.y)
+	_update_volley_prompt_position()
 	call_deferred("_layout_hand_container")
 	if left_wall and left_wall.shape is RectangleShape2D:
 		var left_shape: RectangleShape2D = left_wall.shape as RectangleShape2D
@@ -488,6 +493,7 @@ func _show_map() -> void:
 	floor_label.text = "Floor %d/%d" % [display_floor, max_floors]
 	_update_seed_display()
 	map_preview_active = false
+	_update_volley_prompt_visibility()
 
 func _show_map_preview() -> void:
 	if map_panel == null:
@@ -497,11 +503,13 @@ func _show_map_preview() -> void:
 	_clear_map_buttons()
 	_update_map_graph([])
 	_update_seed_display()
+	_update_volley_prompt_visibility()
 
 func _hide_all_panels() -> void:
 	if hud_controller:
 		hud_controller.hide_all_panels()
 	_hide_outcome_overlays()
+	_update_volley_prompt_visibility()
 
 func _toggle_map_preview() -> void:
 	if map_preview_active:
@@ -746,6 +754,8 @@ func _start_turn() -> void:
 	_refresh_hand()
 	_refresh_mod_buttons()
 	_update_labels()
+	_update_volley_prompt_visibility()
+	_update_volley_prompt_position()
 
 func _end_turn() -> void:
 	if state != GameState.PLANNING:
@@ -769,6 +779,7 @@ func _launch_volley() -> void:
 	reserve_launch_cooldown = 0.1
 	_spawn_volley_ball()
 	info_label.text = "Volley in motion."
+	_update_volley_prompt_visibility()
 
 func _launch_reserve_ball() -> void:
 	if state != GameState.VOLLEY:
@@ -908,6 +919,7 @@ func _show_shop() -> void:
 	_focus_shop_buttons()
 	_refresh_mod_buttons()
 	_update_labels()
+	_update_volley_prompt_visibility()
 
 func _apply_hud_theme() -> void:
 	if hud == null:
@@ -1101,6 +1113,7 @@ func _show_rest() -> void:
 	hp = min(max_hp, hp + 20)
 	_update_labels()
 	_show_map()
+	_update_volley_prompt_visibility()
 
 func _show_game_over() -> void:
 	state = GameState.GAME_OVER
@@ -1110,6 +1123,7 @@ func _show_game_over() -> void:
 	gameover_label.text = "Game Over"
 	info_label.text = "Your run has ended."
 	_show_outcome_overlay(false)
+	_update_volley_prompt_visibility()
 
 func _show_reward_panel() -> void:
 	state = GameState.REWARD
@@ -1121,6 +1135,7 @@ func _show_reward_panel() -> void:
 	info_label.text = "Room cleared. Choose a reward."
 	_build_reward_buttons()
 	_update_labels()
+	_update_volley_prompt_visibility()
 
 func _show_treasure_panel(reroll: bool = true) -> void:
 	state = GameState.TREASURE
@@ -1133,6 +1148,7 @@ func _show_treasure_panel(reroll: bool = true) -> void:
 	_render_treasure_rewards(treasure_reward_entries)
 	info_label.text = "Treasure claimed."
 	_update_labels()
+	_update_volley_prompt_visibility()
 
 func _roll_treasure_rewards() -> Array[Dictionary]:
 	var rewards: Array[Dictionary] = []
@@ -1244,6 +1260,7 @@ func _show_victory() -> void:
 	gameover_label.text = "Victory!"
 	info_label.text = "You cleared the run."
 	_show_outcome_overlay(true)
+	_update_volley_prompt_visibility()
 
 func _hide_outcome_overlays() -> void:
 	if victory_overlay:
@@ -1600,6 +1617,60 @@ func _show_single_panel(panel: Control) -> void:
 	_hide_all_panels()
 	if panel:
 		panel.visible = true
+
+func _update_volley_prompt_visibility() -> void:
+	if volley_prompt_label == null:
+		return
+	var should_show := state == GameState.PLANNING
+	if should_show:
+		if not volley_prompt_pulsing:
+			_start_volley_prompt_pulse()
+	else:
+		if volley_prompt_pulsing:
+			_stop_volley_prompt_pulse()
+
+func _start_volley_prompt_pulse() -> void:
+	if volley_prompt_label == null:
+		return
+	if volley_prompt_tween and volley_prompt_tween.is_running():
+		volley_prompt_tween.kill()
+	volley_prompt_label.visible = true
+	volley_prompt_label.modulate = Color(1, 1, 1, 0)
+	volley_prompt_tween = create_tween()
+	volley_prompt_tween.set_loops()
+	volley_prompt_tween.tween_property(volley_prompt_label, "modulate:a", 1.0, 0.9).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	volley_prompt_tween.tween_property(volley_prompt_label, "modulate:a", 0.0, 0.9).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+	volley_prompt_pulsing = true
+
+func _stop_volley_prompt_pulse() -> void:
+	if volley_prompt_label == null:
+		return
+	if volley_prompt_tween and volley_prompt_tween.is_running():
+		volley_prompt_tween.kill()
+	volley_prompt_tween = create_tween()
+	volley_prompt_tween.tween_property(volley_prompt_label, "modulate:a", 0.0, 0.35).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+	volley_prompt_tween.tween_callback(func() -> void:
+		volley_prompt_label.visible = false
+	)
+	volley_prompt_pulsing = false
+
+func _update_volley_prompt_position() -> void:
+	if volley_prompt_label == null or paddle == null:
+		return
+	var min_size := volley_prompt_label.get_combined_minimum_size()
+	var fallback_width: float = maxf(360.0, volley_prompt_label.custom_minimum_size.x)
+	if min_size == Vector2.ZERO:
+		min_size = Vector2(fallback_width, 0.0)
+	else:
+		min_size.x = max(min_size.x, fallback_width)
+	volley_prompt_label.size = min_size
+	var viewport := get_viewport()
+	var center_x: float = App.get_layout_size().x * 0.5
+	if viewport != null:
+		var rect: Rect2 = viewport.get_visible_rect()
+		center_x = rect.position.x + rect.size.x * 0.5
+	var target_y := paddle.global_position.y + VOLLEY_PROMPT_OFFSET_Y
+	volley_prompt_label.global_position = Vector2(center_x - min_size.x * 0.5, target_y - min_size.y * 0.5)
 
 func _capture_deck_return_context() -> void:
 	deck_return_panel = ReturnPanel.NONE
