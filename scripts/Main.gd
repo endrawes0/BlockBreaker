@@ -1354,14 +1354,15 @@ func _play_card(instance_id: int) -> void:
 		info_label.text = "Not enough energy."
 		return
 	energy -= cost
-	_apply_card_effect(card_id, instance_id)
-	if card_id != "wound":
+	var should_discard: bool = _apply_card_effect(card_id, instance_id)
+	if should_discard:
 		deck_manager.discard_card_instance(instance_id)
 	_refresh_hand()
 	_update_reserve_indicator()
 	_update_labels()
 
-func _apply_card_effect(card_id: String, instance_id: int) -> void:
+func _apply_card_effect(card_id: String, instance_id: int) -> bool:
+	var should_discard := true
 	match card_id:
 		"punch":
 			volley_damage_bonus += 1
@@ -1386,6 +1387,8 @@ func _apply_card_effect(card_id: String, instance_id: int) -> void:
 		"wound":
 			deck_manager.remove_card_instance_from_all(instance_id, true)
 			info_label.text = "Wound removed from your deck."
+			should_discard = false
+	return should_discard
 		_:
 			pass
 
