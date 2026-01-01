@@ -1,5 +1,7 @@
 # Agent Notes
 
+- Direct questions should be answered directly instead of proposing or making code changes.
+
 ## Export Process (Windows/Linux/macOS)
 
 Prereqs:
