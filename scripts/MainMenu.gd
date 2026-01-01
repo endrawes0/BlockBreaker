@@ -42,6 +42,10 @@ func _ready() -> void:
 	_update_continue_button()
 	App.bind_button_feedback(self)
 
+func _input(event: InputEvent) -> void:
+	if event is InputEventMouseMotion:
+		Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel") and App.has_run():
 		App.continue_run()
