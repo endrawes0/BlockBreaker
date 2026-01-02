@@ -173,10 +173,29 @@ func _layout_positions(room_index: Dictionary, depths: Dictionary, source_rooms:
 		var rooms_at_depth: Array = depth_groups[depth]
 		var usable_width: float = max(1.0, size.x - margin * 2.0)
 		var index_positions := _build_index_positions(rooms_at_depth, usable_width, margin, global_max_index)
+		var center_x: float = usable_width * 0.5 + margin
+		var min_x: float = INF
+		var max_x: float = -INF
 		for room_id in rooms_at_depth:
-			var x: float = float(index_positions.get(String(room_id), usable_width * 0.5 + margin))
 			if room_id in ["start", "boss", "victory"]:
-				x = usable_width * 0.5 + margin
+				continue
+			var key := String(room_id)
+			var x := float(index_positions.get(key, center_x))
+			min_x = min(min_x, x)
+			max_x = max(max_x, x)
+		var shift_x := 0.0
+		if min_x != INF and max_x != -INF:
+			var current_center: float = (min_x + max_x) * 0.5
+			shift_x = center_x - current_center
+			var min_shift: float = margin - min_x
+			var max_shift: float = margin + usable_width - max_x
+			shift_x = clamp(shift_x, min_shift, max_shift)
+		for room_id in rooms_at_depth:
+			var x: float = float(index_positions.get(String(room_id), center_x))
+			if room_id in ["start", "boss", "victory"]:
+				x = center_x
+			else:
+				x += shift_x
 			var y: float = size.y - margin - row_spacing * float(depth)
 			positions[room_id] = Vector2(x, y)
 	return positions
