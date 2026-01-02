@@ -173,7 +173,6 @@ var paddle_speed_buff_turns: int = 0
 var paddle_speed_multiplier: float = 1.3
 
 var active_balls: Array[Node] = []
-var encounter_base_threat: int = 5
 var encounter_hp: int = 1
 var encounter_rows: int = 4
 var encounter_cols: int = 8
@@ -416,10 +415,8 @@ func _apply_act_config_to_encounter(config: EncounterConfig, is_elite: bool, is_
 		return
 	if is_boss:
 		config.base_hp = max(1, int(round(float(config.base_hp) * act_config.boss_hp_multiplier)))
-		config.base_threat = max(0, int(round(float(config.base_threat) * act_config.boss_threat_multiplier)))
 	elif is_elite:
 		config.base_hp = max(1, int(round(float(config.base_hp) * act_config.elite_hp_multiplier)))
-		config.base_threat = max(0, int(round(float(config.base_threat) * act_config.elite_threat_multiplier)))
 	if config.variant_policy != null and act_config.variant_chance_multiplier != 1.0:
 		config.variant_policy = _scaled_variant_policy(config.variant_policy, act_config.variant_chance_multiplier)
 
@@ -884,7 +881,6 @@ func _begin_encounter(is_elite: bool, is_boss: bool) -> void:
 	encounter_rows = config.rows
 	encounter_cols = config.cols
 	encounter_hp = config.base_hp
-	encounter_base_threat = config.base_threat
 	if encounter_speed_boost and not is_boss:
 		info_label.text = "Volley Mod: Speed Boost."
 	encounter_manager.start_encounter(config, Callable(self, "_on_brick_destroyed"), Callable(self, "_on_brick_damaged"))
@@ -912,7 +908,7 @@ func _end_turn() -> void:
 	if state != GameState.PLANNING:
 		return
 	_discard_hand()
-	var incoming: int = max(0, encounter_manager.calculate_threat(encounter_base_threat) - block)
+	var incoming: int = max(0, encounter_manager.calculate_threat() - block)
 	hp -= incoming
 	info_label.text = "You take %d damage." % incoming
 	if hp <= 0:
@@ -1012,7 +1008,7 @@ func _confirm_forfeit_volley() -> void:
 func _apply_volley_threat() -> void:
 	var threat: int = 0
 	if encounter_manager:
-		threat = encounter_manager.calculate_threat(encounter_base_threat)
+		threat = encounter_manager.calculate_threat()
 	hp -= threat
 	if hp <= 0:
 		_show_game_over()
@@ -1663,7 +1659,7 @@ func _update_labels() -> void:
 	var draw_count: int = deck_manager.draw_pile.size()
 	if state != GameState.PLANNING and state != GameState.VOLLEY:
 		draw_count = deck_manager.deck.size()
-	var threat: int = encounter_manager.calculate_threat(encounter_base_threat)
+	var threat: int = encounter_manager.calculate_threat()
 	hud_controller.update_labels(
 		energy,
 		max_energy,
