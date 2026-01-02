@@ -40,9 +40,6 @@ const START_PROMPT_EXTRA_OFFSET_Y: float = 40.0
 @export var brick_gap: Vector2 = Vector2(8, 8)
 @export var top_margin: float = 70.0
 @export var planning_victory_messages: Array[String] = ["Nice one!"]
-@export var combat_intro_text: String = "Combat: Plan your volley, then launch."
-@export var elite_intro_text: String = "Elite: Plan your volley, then launch."
-@export var boss_intro_text: String = "Boss fight. Plan carefully."
 
 @onready var paddle: CharacterBody2D = $Paddle
 @onready var bricks_root: Node2D = $Bricks
@@ -390,11 +387,13 @@ func _get_active_act_config() -> Resource:
 	return act_config
 
 func _get_intro_text(act_config: Resource, is_elite: bool, is_boss: bool) -> String:
+	if act_config == null:
+		return "Boss fight. Plan carefully." if is_boss else "Plan your volley, then launch."
 	if is_boss:
-		return boss_intro_text
+		return act_config.boss_intro
 	if is_elite:
-		return elite_intro_text
-	return combat_intro_text
+		return act_config.elite_intro
+	return act_config.combat_intro
 
 func _scaled_variant_policy(policy: VariantPolicy, multiplier: float) -> VariantPolicy:
 	if policy == null:

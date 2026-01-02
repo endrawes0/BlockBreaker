@@ -3,8 +3,8 @@ class_name ActConfig
 
 @export var act_index: int = 1
 
-@export var combat_intro: String = "Plan your volley, then launch."
-@export var elite_intro: String = "Plan your volley, then launch."
+@export var combat_intro: String = "Combat: Plan your volley, then launch."
+@export var elite_intro: String = "Elite: Plan your volley, then launch."
 @export var boss_intro: String = "Boss fight. Plan carefully."
 
 @export var combat_gold_reward: int = 25
