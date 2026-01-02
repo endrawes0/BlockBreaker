@@ -181,6 +181,7 @@ var current_is_elite: bool = false
 var current_pattern: String = "grid"
 var encounter_speed_boost: bool = false
 var act_ball_speed_multiplier: float = 1.0
+var act_threat_multiplier: float = 1.0
 var deck_return_panel: int = ReturnPanel.NONE
 var deck_return_info: String = ""
 var volley_prompt_tween: Tween = null
@@ -870,6 +871,7 @@ func _begin_encounter(is_elite: bool, is_boss: bool) -> void:
 	active_act_config = _get_active_act_config()
 	current_is_elite = is_elite
 	act_ball_speed_multiplier = active_act_config.ball_speed_multiplier if active_act_config != null else 1.0
+	act_threat_multiplier = active_act_config.block_threat_multiplier if active_act_config != null else 1.0
 	info_label.text = _get_intro_text(active_act_config, is_elite, is_boss)
 	_clear_active_balls()
 	_reset_deck_for_next_floor()
@@ -908,7 +910,7 @@ func _end_turn() -> void:
 	if state != GameState.PLANNING:
 		return
 	_discard_hand()
-	var incoming: int = max(0, encounter_manager.calculate_threat() - block)
+	var incoming: int = max(0, encounter_manager.calculate_threat(act_threat_multiplier) - block)
 	hp -= incoming
 	info_label.text = "You take %d damage." % incoming
 	if hp <= 0:
@@ -1008,7 +1010,7 @@ func _confirm_forfeit_volley() -> void:
 func _apply_volley_threat() -> void:
 	var threat: int = 0
 	if encounter_manager:
-		threat = encounter_manager.calculate_threat()
+		threat = encounter_manager.calculate_threat(act_threat_multiplier)
 	hp -= threat
 	if hp <= 0:
 		_show_game_over()
@@ -1659,7 +1661,7 @@ func _update_labels() -> void:
 	var draw_count: int = deck_manager.draw_pile.size()
 	if state != GameState.PLANNING and state != GameState.VOLLEY:
 		draw_count = deck_manager.deck.size()
-	var threat: int = encounter_manager.calculate_threat()
+	var threat: int = encounter_manager.calculate_threat(act_threat_multiplier)
 	hud_controller.update_labels(
 		energy,
 		max_energy,

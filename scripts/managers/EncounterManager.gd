@@ -80,14 +80,14 @@ func start_encounter(config: EncounterConfig, on_brick_destroyed: Callable, on_b
 		_spawn_boss_core(config, on_brick_destroyed, on_brick_damaged)
 	encounter_started.emit(config)
 
-func calculate_threat() -> int:
+func calculate_threat(multiplier: float = 1.0) -> int:
 	if bricks_root == null or bricks_root.get_child_count() == 0:
 		return 0
 	var total: int = 0
 	for brick in bricks_root.get_children():
 		if brick.has_method("get_threat"):
 			total += brick.get_threat()
-	return total
+	return int(round(float(total) * max(0.0, multiplier)))
 
 func check_victory() -> bool:
 	return calculate_threat(0) <= 0

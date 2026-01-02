@@ -13,5 +13,6 @@ class_name ActConfig
 
 @export var ball_speed_multiplier: float = 1.0
 @export var variant_chance_multiplier: float = 1.0
+@export var block_threat_multiplier: float = 1.0
 @export var elite_hp_multiplier: float = 1.0
 @export var boss_hp_multiplier: float = 1.0
