@@ -188,6 +188,8 @@ var volley_prompt_pulsing: bool = false
 
 var act_configs_by_index: Dictionary = {}
 var active_act_config: Resource
+var act_floor_lengths: Array[int] = []
+var act_floor_breaks: Array[int] = []
 
 func _update_reserve_indicator() -> void:
 	if paddle and paddle.has_method("set_reserve_count"):
@@ -346,20 +348,48 @@ func _load_act_configs() -> void:
 		file_name = dir.get_next()
 	dir.list_dir_end()
 
-func _act_index_for_floor(floor_index: int) -> int:
-	if floor_plan_generator_config == null or floor_plan_generator_config.acts.is_empty():
-		return 0
+func _configure_act_progression() -> void:
+	act_floor_lengths.clear()
+	act_floor_breaks.clear()
+	var base_non_boss: int = max(1, max_combat_floors)
+	if floor_plan_generator_config is FLOOR_PLAN_GENERATOR_CONFIG:
+		var config := floor_plan_generator_config
+		if config.acts.is_empty():
+			base_non_boss = max(1, int(config.floors) - 1)
+		else:
+			for entry in config.acts:
+				var act_dict: Dictionary = Dictionary(entry)
+				var floors: int = max(0, int(act_dict.get("floors", 0)))
+				if floors > 0:
+					act_floor_lengths.append(floors)
+	if act_floor_lengths.is_empty():
+		var act_count: int = max(1, act_configs_by_index.size())
+		for _i in range(act_count):
+			act_floor_lengths.append(base_non_boss)
 	var cursor: int = 0
-	for idx in range(floor_plan_generator_config.acts.size()):
-		var act_variant: Variant = floor_plan_generator_config.acts[idx]
-		var act: Dictionary = Dictionary(act_variant)
-		var act_floors: int = max(0, int(act.get("floors", 0)))
-		if act_floors <= 0:
-			continue
-		cursor += act_floors
-		if floor_index <= cursor:
+	for floors in act_floor_lengths:
+		cursor += max(1, floors)
+		act_floor_breaks.append(cursor)
+	if not act_floor_breaks.is_empty():
+		max_combat_floors = act_floor_breaks[0]
+		var total_non_boss: int = act_floor_breaks[act_floor_breaks.size() - 1]
+		var total_bosses: int = act_floor_breaks.size()
+		max_floors = total_non_boss + total_bosses
+
+func _act_index_for_floor(floor_index: int) -> int:
+	if act_floor_breaks.is_empty():
+		return 0
+	for idx in range(act_floor_breaks.size()):
+		if floor_index <= act_floor_breaks[idx]:
 			return idx
-	return max(0, floor_plan_generator_config.acts.size() - 1)
+	return max(0, act_floor_breaks.size() - 1)
+
+func _advance_act_threshold(current_act_index: int) -> void:
+	if current_act_index + 1 < act_floor_breaks.size():
+		max_combat_floors = act_floor_breaks[current_act_index + 1]
+
+func _is_final_act(current_act_index: int) -> bool:
+	return act_floor_breaks.is_empty() or current_act_index >= act_floor_breaks.size() - 1
 
 func _get_act_config_for_floor(floor_index: int) -> Resource:
 	var index := _act_index_for_floor(floor_index)
@@ -576,6 +606,7 @@ func _start_run() -> void:
 	gold = 60
 	floor_index = 0
 	current_is_boss = false
+	current_is_elite = false
 	starting_hand_size = BASE_STARTING_HAND_SIZE
 	ball_mod_counts.clear()
 	active_ball_mod = ""
@@ -586,6 +617,7 @@ func _start_run() -> void:
 	for child in bricks_root.get_children():
 		child.queue_free()
 	_generate_floor_plan_if_needed()
+	_configure_act_progression()
 	_reset_run_rng()
 	if deck_manager:
 		deck_manager.set_rng(run_rng)
@@ -1004,7 +1036,12 @@ func _end_encounter() -> void:
 	_clear_active_balls()
 	_reset_deck_for_next_floor()
 	if current_is_boss:
-		_show_victory()
+		var act_index := _act_index_for_floor(floor_index)
+		if _is_final_act(act_index):
+			_show_victory()
+		else:
+			_advance_act_threshold(act_index)
+			_show_map()
 		return
 	gold += _get_encounter_gold_reward()
 	if state == GameState.PLANNING:
