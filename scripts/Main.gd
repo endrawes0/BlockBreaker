@@ -350,10 +350,10 @@ func _act_index_for_floor(floor_index: int) -> int:
 	if floor_plan_generator_config == null or floor_plan_generator_config.acts.is_empty():
 		return 0
 	var cursor: int = 0
-		for idx in range(floor_plan_generator_config.acts.size()):
-			var act_variant: Variant = floor_plan_generator_config.acts[idx]
-			var act: Dictionary = Dictionary(act_variant)
-			var act_floors: int = max(0, int(act.get("floors", 0)))
+	for idx in range(floor_plan_generator_config.acts.size()):
+		var act_variant: Variant = floor_plan_generator_config.acts[idx]
+		var act: Dictionary = Dictionary(act_variant)
+		var act_floors: int = max(0, int(act.get("floors", 0)))
 		if act_floors <= 0:
 			continue
 		cursor += act_floors
