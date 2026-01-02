@@ -25,6 +25,7 @@ const FLOOR_PLAN_PATH: String = "res://data/floor_plans/basic.tres"
 const FLOOR_PLAN_GENERATOR_CONFIG_PATH: String = "res://data/floor_plans/generator_config.tres"
 const FLOOR_PLAN_GENERATOR := preload("res://scripts/data/FloorPlanGenerator.gd")
 const FLOOR_PLAN_GENERATOR_CONFIG := preload("res://scripts/data/FloorPlanGeneratorConfig.gd")
+const ACT_CONFIG_SCRIPT := preload("res://scripts/data/ActConfig.gd")
 const BALANCE_DATA_PATH: String = "res://data/balance/basic.tres"
 const EMOJI_FONT_PATH: String = "res://assets/fonts/NotoColorEmoji.ttf"
 const OUTCOME_PARTICLE_SCENE: PackedScene = preload("res://scenes/HitParticle.tscn")
@@ -186,7 +187,7 @@ var volley_prompt_tween: Tween = null
 var volley_prompt_pulsing: bool = false
 
 var act_configs_by_index: Dictionary = {}
-var active_act_config: ActConfig
+var active_act_config: Resource
 
 func _update_reserve_indicator() -> void:
 	if paddle and paddle.has_method("set_reserve_count"):
@@ -339,7 +340,7 @@ func _load_act_configs() -> void:
 		if not dir.current_is_dir() and file_name.ends_with(".tres"):
 			var resource_path := ACT_CONFIG_DIR.path_join(file_name)
 			var resource := ResourceLoader.load(resource_path)
-			if resource is ActConfig:
+			if resource != null and resource.get_script() == ACT_CONFIG_SCRIPT:
 				var index := max(1, int(resource.act_index))
 				act_configs_by_index[index - 1] = resource
 		file_name = dir.get_next()
@@ -350,7 +351,7 @@ func _act_index_for_floor(floor_index: int) -> int:
 		return 0
 	var cursor: int = 0
 	for idx in range(floor_plan_generator_config.acts.size()):
-		var act := floor_plan_generator_config.acts[idx]
+		var act: Dictionary = Dictionary(floor_plan_generator_config.acts[idx])
 		var act_floors := max(0, int(act.get("floors", 0)))
 		if act_floors <= 0:
 			continue
@@ -359,14 +360,14 @@ func _act_index_for_floor(floor_index: int) -> int:
 			return idx
 	return max(0, floor_plan_generator_config.acts.size() - 1)
 
-func _get_act_config_for_floor(floor_index: int) -> ActConfig:
+func _get_act_config_for_floor(floor_index: int) -> Resource:
 	var index := _act_index_for_floor(floor_index)
-	var act_config: ActConfig = act_configs_by_index.get(index, null)
+	var act_config: Resource = act_configs_by_index.get(index, null)
 	if act_config == null:
-		return ActConfig.new()
+		return ACT_CONFIG_SCRIPT.new()
 	return act_config
 
-func _get_intro_text(act_config: ActConfig, is_elite: bool, is_boss: bool) -> String:
+func _get_intro_text(act_config: Resource, is_elite: bool, is_boss: bool) -> String:
 	if act_config == null:
 		return "Boss fight. Plan carefully." if is_boss else "Plan your volley, then launch."
 	if is_boss:
@@ -387,7 +388,7 @@ func _scaled_variant_policy(policy: VariantPolicy, multiplier: float) -> Variant
 	scaled.curse_chance = clamp(policy.curse_chance * scale, 0.0, 1.0)
 	return scaled
 
-func _apply_act_config_to_encounter(config: EncounterConfig, is_elite: bool, is_boss: bool, act_config: ActConfig) -> void:
+func _apply_act_config_to_encounter(config: EncounterConfig, is_elite: bool, is_boss: bool, act_config: Resource) -> void:
 	if config == null or act_config == null:
 		return
 	if is_boss:
