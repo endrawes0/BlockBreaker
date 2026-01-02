@@ -1052,7 +1052,7 @@ func _create_toast(message: String, tint: Color) -> Dictionary:
 
 func _animate_toast(toast_data: Dictionary) -> Tween:
 	var toast := toast_data.get("toast") as Label
-	var original_pos := toast_data.get("pos", Vector2.ZERO)
+	var original_pos: Vector2 = toast_data.get("pos", Vector2.ZERO)
 	var tween := create_tween()
 	tween.tween_property(toast, "global_position:x", original_pos.x, 0.35).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	tween.tween_interval(0.5)
