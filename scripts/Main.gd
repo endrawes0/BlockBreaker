@@ -340,8 +340,8 @@ func _load_act_configs() -> void:
 		if not dir.current_is_dir() and file_name.ends_with(".tres"):
 			var resource_path: String = ACT_CONFIG_DIR.path_join(file_name)
 			var resource: Resource = ResourceLoader.load(resource_path)
-			if resource != null and resource.get_script() == ACT_CONFIG_SCRIPT:
-				var index := max(1, int(resource.act_index))
+				if resource != null and resource.get_script() == ACT_CONFIG_SCRIPT:
+					var index: int = max(1, int(resource.act_index))
 				act_configs_by_index[index - 1] = resource
 		file_name = dir.get_next()
 	dir.list_dir_end()
@@ -350,9 +350,10 @@ func _act_index_for_floor(floor_index: int) -> int:
 	if floor_plan_generator_config == null or floor_plan_generator_config.acts.is_empty():
 		return 0
 	var cursor: int = 0
-	for idx in range(floor_plan_generator_config.acts.size()):
-		var act: Dictionary = Dictionary(floor_plan_generator_config.acts[idx])
-		var act_floors := max(0, int(act.get("floors", 0)))
+		for idx in range(floor_plan_generator_config.acts.size()):
+			var act_variant: Variant = floor_plan_generator_config.acts[idx]
+			var act: Dictionary = Dictionary(act_variant)
+			var act_floors: int = max(0, int(act.get("floors", 0)))
 		if act_floors <= 0:
 			continue
 		cursor += act_floors
