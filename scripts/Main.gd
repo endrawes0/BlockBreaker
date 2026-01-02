@@ -869,7 +869,8 @@ func _start_boss() -> void:
 func _begin_encounter(is_elite: bool, is_boss: bool) -> void:
 	state = GameState.PLANNING
 	_hide_all_panels()
-	active_act_config = _get_act_config_for_floor(floor_index)
+	var act_floor_index: int = floor_index - 1 if is_boss else floor_index
+	active_act_config = _get_act_config_for_floor(act_floor_index)
 	current_is_elite = is_elite
 	act_ball_speed_multiplier = active_act_config.ball_speed_multiplier if active_act_config != null else 1.0
 	info_label.text = _get_intro_text(active_act_config, is_elite, is_boss)
@@ -1036,10 +1037,12 @@ func _end_encounter() -> void:
 	_clear_active_balls()
 	_reset_deck_for_next_floor()
 	if current_is_boss:
-		var act_index := _act_index_for_floor(floor_index)
+		var act_index := _act_index_for_floor(max(1, floor_index - 1))
 		if _is_final_act(act_index):
 			_show_victory()
 		else:
+			_spawn_act_complete_particles()
+			await _play_planning_victory_message("Act %d Complete!" % (act_index + 1))
 			_advance_act_threshold(act_index)
 			_show_map()
 		return
@@ -1383,6 +1386,9 @@ func _show_outcome_overlay(is_victory: bool) -> void:
 	elif not is_victory and defeat_overlay:
 		defeat_overlay.visible = true
 		_spawn_outcome_particles(Color(0.35, 0.1, 0.1, 1), false)
+
+func _spawn_act_complete_particles() -> void:
+	_spawn_outcome_particles(Color(0.95, 0.85, 0.25, 1), true)
 
 func _spawn_victory_particles() -> void:
 	var base_count: int = App.get_vfx_count(OUTCOME_PARTICLE_COUNT)
