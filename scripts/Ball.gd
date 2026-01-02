@@ -172,26 +172,18 @@ func _spawn_ghost() -> void:
 	ghost.position = position
 	ghost.z_index = rect.z_index if rect else 0
 	parent_node.add_child(ghost)
-	var ghost_shape := Polygon2D.new()
+	var ghost_rect := rect.duplicate() if rect else ColorRect.new()
 	var base_color := rect.color if rect else DEFAULT_MOD_COLOR
 	base_color.a = clampf(GHOST_ALPHA * App.get_vfx_intensity(), 0.0, 1.0)
-	ghost_shape.color = base_color
-	var base_size: Vector2 = rect.size if rect else Vector2(16, 16)
-	var radius: float = 0.5 * min(base_size.x, base_size.y)
-	ghost_shape.polygon = _make_circle_points(radius, 16)
-	ghost_shape.z_index = rect.z_index if rect else 0
-	ghost.add_child(ghost_shape)
+	ghost_rect.color = base_color
+	ghost_rect.position = rect.position if rect else Vector2(-8, -8)
+	ghost_rect.size = rect.size if rect else Vector2(16, 16)
+	ghost_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ghost_rect.z_index = rect.z_index if rect else 0
+	ghost.add_child(ghost_rect)
 	var tween := ghost.create_tween()
-	tween.tween_property(ghost_shape, "color", Color(base_color.r, base_color.g, base_color.b, 0.0), GHOST_LIFETIME)
+	tween.tween_property(ghost_rect, "color", Color(base_color.r, base_color.g, base_color.b, 0.0), GHOST_LIFETIME)
 	tween.tween_callback(ghost.queue_free)
-
-func _make_circle_points(radius: float, segments: int) -> PackedVector2Array:
-	var points := PackedVector2Array()
-	var count: int = max(3, segments)
-	for i in range(count):
-		var angle: float = TAU * float(i) / float(count)
-		points.append(Vector2(cos(angle), sin(angle)) * radius)
-	return points
 
 func _trigger_explosion(center: Vector2) -> void:
 	var bricks: Array = get_tree().get_nodes_in_group("bricks")
