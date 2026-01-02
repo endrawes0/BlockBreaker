@@ -103,7 +103,7 @@ func _update_toggle_button_text() -> void:
 func _layout_toggle_button() -> void:
 	if toggle_button == null:
 		return
-	var padding: Vector2 = Vector2(10.0, 8.0)
+	var padding: Vector2 = Vector2(10.0, 44.0)
 	var min_size := toggle_button.get_combined_minimum_size()
 	toggle_button.size = min_size
 	toggle_button.position = Vector2(size.x - min_size.x - padding.x, padding.y)
