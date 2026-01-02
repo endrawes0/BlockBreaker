@@ -438,6 +438,86 @@ func _get_encounter_gold_reward() -> int:
 		return active_act_config.elite_gold_reward
 	return active_act_config.combat_gold_reward
 
+func _room_floor_number(room_id: String) -> int:
+	if not room_id.begins_with("f"):
+		return -1
+	var parts := room_id.split("_")
+	if parts.size() < 2:
+		return -1
+	var floor_str := parts[0].substr(1, parts[0].length() - 1)
+	if not floor_str.is_valid_int():
+		return -1
+	return int(floor_str)
+
+func _filter_plan_for_current_act(plan: Dictionary) -> Dictionary:
+	if act_floor_breaks.is_empty():
+		return plan
+	var rooms: Array[Dictionary] = plan.get("rooms", [])
+	var has_numbered_rooms := false
+	for room in rooms:
+		var room_id := String(room.get("id", ""))
+		if room_id.begins_with("f") and room_id.find("_") >= 0:
+			has_numbered_rooms = true
+			break
+	if not has_numbered_rooms:
+		return plan
+	var act_floor_index := max(1, floor_index + 1)
+	var act_index := _act_index_for_floor(act_floor_index)
+	var start_floor: int = 1
+	if act_index > 0:
+		start_floor = act_floor_breaks[act_index - 1] + 1
+	var end_floor: int = act_floor_breaks[act_index]
+	var keep_ids: Dictionary = {}
+	var filtered_rooms: Array[Dictionary] = []
+	for room in rooms:
+		var room_id := String(room.get("id", ""))
+		if room_id == "":
+			continue
+		var room_floor := _room_floor_number(room_id)
+		if room_floor >= start_floor and room_floor <= end_floor:
+			filtered_rooms.append(room)
+			keep_ids[room_id] = true
+	if start_floor == 1:
+		for room in rooms:
+			if String(room.get("id", "")) == "start":
+				filtered_rooms.append(room)
+				keep_ids["start"] = true
+				break
+	if _is_final_act(act_index):
+		for room in rooms:
+			var room_id := String(room.get("id", ""))
+			if room_id in ["boss", "victory"]:
+				filtered_rooms.append(room)
+				keep_ids[room_id] = true
+	var filtered_plan := plan.duplicate()
+	filtered_plan["rooms"] = filtered_rooms
+	var visible_ids: Array = plan.get("visible_room_ids", [])
+	if not visible_ids.is_empty():
+		var filtered_visible: Array[String] = []
+		for room_id in visible_ids:
+			var id_str := String(room_id)
+			if keep_ids.has(id_str):
+				filtered_visible.append(id_str)
+		filtered_plan["visible_room_ids"] = filtered_visible
+	var visible_edges: Array = plan.get("visible_edges", [])
+	if not visible_edges.is_empty():
+		var filtered_edges: Array[Dictionary] = []
+		for edge in visible_edges:
+			var from_id := String(edge.get("from", ""))
+			var to_id := String(edge.get("to", ""))
+			if keep_ids.has(from_id) and keep_ids.has(to_id):
+				filtered_edges.append(edge)
+		filtered_plan["visible_edges"] = filtered_edges
+	var current_id := String(plan.get("current_room_id", ""))
+	var start_id := String(plan.get("start_room_id", ""))
+	if keep_ids.has(current_id):
+		filtered_plan["start_room_id"] = current_id
+	elif keep_ids.has(start_id):
+		filtered_plan["start_room_id"] = start_id
+	elif not filtered_rooms.is_empty():
+		filtered_plan["start_room_id"] = String(filtered_rooms[0].get("id", ""))
+	return filtered_plan
+
 func _apply_balance_data(data: Resource) -> void:
 	card_data = data.card_data
 	card_pool = data.card_pool
@@ -825,6 +905,7 @@ func _update_map_graph(choices: Array[Dictionary]) -> void:
 	if map_graph == null or not map_graph.has_method("set_plan"):
 		return
 	var plan := map_manager.get_active_plan_summary(choices)
+	plan = _filter_plan_for_current_act(plan)
 	map_graph.call("set_plan", plan, choices)
 
 func _enter_room(room_type: String) -> void:
