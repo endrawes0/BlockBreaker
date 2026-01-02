@@ -297,6 +297,7 @@ func _build_outgoing_edges(edges: Array[Dictionary]) -> Dictionary:
 	return outgoing
 
 func _order_room_ids(room_ids: Array) -> Array:
+	# NOTE: This ordering assumes "f<floor>_<index>" room ids; other schemes will fall back to sort-by-id.
 	var indexed: Array[Dictionary] = []
 	var fallback: Array[String] = []
 	for room_id in room_ids:
