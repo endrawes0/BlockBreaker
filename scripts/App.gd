@@ -35,6 +35,7 @@ var _settings_vfx_enabled: bool = true
 var _settings_vfx_intensity: float = 1.0
 var _settings_ball_speed_multiplier: float = 1.0
 var _settings_paddle_speed_multiplier: float = 1.0
+var _test_lab_unlocked: bool = false
 
 func _ready() -> void:
 	_ui_particle_rng.randomize()
@@ -69,6 +70,12 @@ func _action_has_key(action: String, keycode: int) -> bool:
 func has_run() -> bool:
 	return run_instance != null and is_instance_valid(run_instance)
 
+func set_test_lab_unlocked(unlocked: bool) -> void:
+	_test_lab_unlocked = unlocked
+
+func is_test_lab_unlocked() -> bool:
+	return _test_lab_unlocked
+
 func start_new_run(seed_value: int = 0) -> void:
 	if run_instance and is_instance_valid(run_instance):
 		run_instance.queue_free()
@@ -76,7 +83,10 @@ func start_new_run(seed_value: int = 0) -> void:
 	if run_instance.has_method("set_pending_seed"):
 		run_instance.set_pending_seed(seed_value)
 	if run_instance.has_method("set_test_lab_enabled"):
-		run_instance.set_test_lab_enabled(false)
+		if _test_lab_unlocked:
+			run_instance.set_test_lab_enabled(true, false)
+		else:
+			run_instance.set_test_lab_enabled(false)
 	get_tree().root.add_child(run_instance)
 	if run_instance.has_method("on_menu_closed"):
 		run_instance.on_menu_closed()
@@ -117,7 +127,7 @@ func show_test_lab() -> void:
 	run_instance = RUN_SCENE.instantiate()
 	get_tree().root.add_child(run_instance)
 	if run_instance.has_method("set_test_lab_enabled"):
-		run_instance.set_test_lab_enabled(true)
+		run_instance.set_test_lab_enabled(true, true)
 	if run_instance.has_method("on_menu_closed"):
 		run_instance.on_menu_closed()
 	_switch_to_scene(run_instance)

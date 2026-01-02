@@ -3,10 +3,13 @@ extends Control
 var main: Node = null
 @onready var debug_panel: Control = $DebugPanel
 @onready var toggle_button: Button = $ToggleDebug
+var initial_debug_panel_visible: bool = true
 
 func _ready() -> void:
 	_apply_debug_font_size(9)
 	_apply_debug_theme()
+	if debug_panel:
+		debug_panel.visible = initial_debug_panel_visible
 	_update_toggle_button_text()
 	_connect_button("ToggleDebug", _toggle_debug_panel)
 	resized.connect(_layout_toggle_button)
@@ -135,6 +138,17 @@ func _toggle_debug_panel() -> void:
 		return
 	debug_panel.visible = not debug_panel.visible
 	_update_toggle_button_text()
+
+func set_debug_panel_visible(visible: bool) -> void:
+	if debug_panel == null:
+		return
+	debug_panel.visible = visible
+	_update_toggle_button_text()
+
+func set_initial_debug_panel_visible(visible: bool) -> void:
+	initial_debug_panel_visible = visible
+	if is_node_ready():
+		set_debug_panel_visible(visible)
 
 func _update_toggle_button_text() -> void:
 	if toggle_button == null or debug_panel == null:
