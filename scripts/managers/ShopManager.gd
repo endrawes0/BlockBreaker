@@ -15,6 +15,7 @@ var max_card_offers: int = 0
 var remove_price: int = 0
 var upgrade_price: int = 0
 var upgrade_hand_bonus: int = 0
+var max_hand_size: int = 0
 var vitality_price: int = 0
 var vitality_max_hp_bonus: int = 0
 var vitality_heal: int = 0
@@ -56,6 +57,7 @@ func configure(config: Dictionary) -> void:
 	remove_price = int(config.get("remove_price", 0))
 	upgrade_price = int(config.get("upgrade_price", 0))
 	upgrade_hand_bonus = int(config.get("upgrade_hand_bonus", 0))
+	max_hand_size = int(config.get("max_hand_size", 0))
 	vitality_price = int(config.get("vitality_price", 0))
 	vitality_max_hp_bonus = int(config.get("vitality_max_hp_bonus", 0))
 	vitality_heal = int(config.get("vitality_heal", 0))
@@ -178,12 +180,20 @@ func _build_shop_buff_buttons() -> void:
 		return
 	var upgrade := Button.new()
 	upgrade.text = "Upgrade starting hand (+%d) (%dg)" % [upgrade_hand_bonus, upgrade_price]
+	if max_hand_size > 0 and _call_get_starting_hand_size() >= max_hand_size:
+		upgrade.disabled = true
+		upgrade.tooltip_text = "Starting hand is at max size."
 	upgrade.pressed.connect(func() -> void:
+		if max_hand_size > 0 and _call_get_starting_hand_size() >= max_hand_size:
+			_call_set_info("Starting hand is at max size.")
+			purchase_failed.emit("hand_max")
+			return
 		if _call_can_afford(upgrade_price):
 			_call_spend_gold(upgrade_price)
 			var new_size: int = _call_upgrade_hand(upgrade_hand_bonus)
 			_call_set_info("Starting hand increased to %d." % new_size)
 			_call_update_labels()
+			_call_refresh_shop_buttons()
 			purchase_completed.emit()
 		else:
 			_call_set_info("Not enough gold.")
@@ -457,6 +467,11 @@ func _call_get_deck_size() -> int:
 func _call_upgrade_hand(bonus: int) -> int:
 	if callbacks.has("upgrade_hand") and callbacks.upgrade_hand.is_valid():
 		return int(callbacks.upgrade_hand.call(bonus))
+	return 0
+
+func _call_get_starting_hand_size() -> int:
+	if callbacks.has("get_starting_hand_size") and callbacks.get_starting_hand_size.is_valid():
+		return int(callbacks.get_starting_hand_size.call())
 	return 0
 
 func _call_apply_vitality(max_bonus: int, heal: int) -> int:

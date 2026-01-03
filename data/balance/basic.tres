@@ -120,6 +120,7 @@ shop_data = {
 "entry_card_count": 1,
 "entry_card_price": 70,
 "max_cards": 7,
+"max_hand_size": 7,
 "paddle_speed_bonus_percent": 10.0,
 "paddle_speed_price": 60,
 "paddle_width_bonus": 10.0,

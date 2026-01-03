@@ -135,6 +135,7 @@ var ball_mod_colors: Dictionary = {}
 var reward_card_count: int = 3
 var shop_card_price: int = 0
 var shop_max_cards: int = 0
+var shop_max_hand_size: int = 0
 var shop_remove_price: int = 0
 var shop_upgrade_price: int = 0
 var shop_upgrade_hand_bonus: int = 0
@@ -402,6 +403,7 @@ func _apply_balance_data(data: Resource) -> void:
 	var shop: Dictionary = data.shop_data
 	shop_card_price = int(shop.get("card_price", 0))
 	shop_max_cards = int(shop.get("max_cards", 0))
+	shop_max_hand_size = int(shop.get("max_hand_size", 0))
 	shop_remove_price = int(shop.get("remove_price", 0))
 	shop_upgrade_price = int(shop.get("upgrade_price", 0))
 	shop_upgrade_hand_bonus = int(shop.get("upgrade_hand_bonus", 0))
@@ -1231,6 +1233,7 @@ func _shop_callbacks() -> Dictionary:
 		"get_deck_size": Callable(self, "_get_deck_size"),
 		"reroll": Callable(self, "_reroll_shop_cards"),
 		"upgrade_hand": Callable(self, "_upgrade_starting_hand"),
+		"get_starting_hand_size": Callable(self, "_get_starting_hand_size"),
 		"apply_vitality": Callable(self, "_apply_vitality"),
 		"apply_max_energy": Callable(self, "_apply_max_energy_buff"),
 		"get_max_energy_bonus": Callable(self, "_get_max_energy_bonus"),
@@ -1259,6 +1262,7 @@ func _configure_shop_manager() -> void:
 		"remove_price": _get_discounted_shop_price(shop_remove_price),
 		"upgrade_hand_bonus": shop_upgrade_hand_bonus,
 		"upgrade_price": _get_discounted_shop_price(shop_upgrade_price),
+		"max_hand_size": shop_max_hand_size,
 		"vitality_max_hp_bonus": shop_vitality_max_hp_bonus,
 		"vitality_heal": shop_vitality_heal,
 		"vitality_price": _get_discounted_shop_price(shop_vitality_price),
@@ -1299,7 +1303,13 @@ func _get_deck_size() -> int:
 	return 0
 
 func _upgrade_starting_hand(bonus: int) -> int:
-	starting_hand_size += bonus
+	if shop_max_hand_size > 0:
+		starting_hand_size = min(starting_hand_size + bonus, shop_max_hand_size)
+	else:
+		starting_hand_size += bonus
+	return starting_hand_size
+
+func _get_starting_hand_size() -> int:
 	return starting_hand_size
 
 func _apply_vitality(max_bonus: int, heal: int) -> int:
