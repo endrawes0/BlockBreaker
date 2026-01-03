@@ -271,7 +271,15 @@ func _build_shop_buff_buttons() -> void:
 	if reserve_ball_bonus > 0:
 		var reserve_buff := Button.new()
 		reserve_buff.text = "Reserve Ball (+%d per volley) (%dg)" % [reserve_ball_bonus, reserve_ball_price]
+		var reserve_current: int = _call_get_reserve_ball_bonus()
+		if reserve_current >= 1:
+			reserve_buff.disabled = true
+			reserve_buff.tooltip_text = "Reserve ball bonus is maxed out."
 		reserve_buff.pressed.connect(func() -> void:
+			if _call_get_reserve_ball_bonus() >= 1:
+				_call_set_info("Reserve ball bonus is maxed out.")
+				purchase_failed.emit("reserve_max")
+				return
 			if _call_can_afford(reserve_ball_price):
 				_call_spend_gold(reserve_ball_price)
 				var new_bonus: int = _call_apply_reserve_ball(reserve_ball_bonus)
@@ -462,6 +470,11 @@ func _call_apply_paddle_speed(bonus_percent: float) -> float:
 func _call_apply_reserve_ball(bonus: int) -> int:
 	if callbacks.has("apply_reserve_ball") and callbacks.apply_reserve_ball.is_valid():
 		return int(callbacks.apply_reserve_ball.call(bonus))
+	return 0
+
+func _call_get_reserve_ball_bonus() -> int:
+	if callbacks.has("get_reserve_ball_bonus") and callbacks.get_reserve_ball_bonus.is_valid():
+		return int(callbacks.get_reserve_ball_bonus.call())
 	return 0
 
 func _call_apply_shop_discount(percent: float) -> void:

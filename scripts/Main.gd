@@ -1233,6 +1233,7 @@ func _shop_callbacks() -> Dictionary:
 		"apply_paddle_width": Callable(self, "_apply_paddle_width_buff"),
 		"apply_paddle_speed": Callable(self, "_apply_paddle_speed_buff"),
 		"apply_reserve_ball": Callable(self, "_apply_reserve_ball_buff"),
+		"get_reserve_ball_bonus": Callable(self, "_get_reserve_ball_bonus"),
 		"apply_shop_discount": Callable(self, "_apply_shop_discount"),
 		"apply_shop_entry_cards": Callable(self, "_apply_shop_entry_cards"),
 		"refresh_mod_buttons": Callable(self, "_refresh_mod_buttons")
@@ -1324,7 +1325,10 @@ func _apply_paddle_speed_buff(bonus_percent: float) -> float:
 	return base_paddle_speed
 
 func _apply_reserve_ball_buff(bonus: int) -> int:
-	volley_ball_bonus_base += bonus
+	volley_ball_bonus_base = min(1, volley_ball_bonus_base + bonus)
+	return volley_ball_bonus_base
+
+func _get_reserve_ball_bonus() -> int:
 	return volley_ball_bonus_base
 
 func _apply_shop_discount(percent: float) -> void:
