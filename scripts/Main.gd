@@ -2064,8 +2064,8 @@ func _show_deck_panel() -> void:
 		return
 	_capture_deck_return_context()
 	_show_single_panel(deck_panel)
-	info_label.text = "Deck contents."
-	hud_controller.populate_card_container(deck_list, deck_manager.deck, Callable(), false, 4)
+	info_label.text = "Draw pile contents."
+	hud_controller.populate_card_container(deck_list, deck_manager.draw_pile, Callable(), false, 4)
 
 func _show_discard_panel() -> void:
 	if state == GameState.GAME_OVER or state == GameState.VICTORY:
