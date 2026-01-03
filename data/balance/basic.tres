@@ -93,19 +93,19 @@ ball_mods = {
 },
 "data": {
 "explosive": {
-"cost": 50,
-"desc": "Explode bricks on hit.",
 "name": "Explosives"
+"cost": 50,
+"desc": "Explode bricks on hit."
 },
 "miracle": {
-"cost": 75,
-"desc": "One floor bounce per ball.",
 "name": "Miracle"
+"cost": 75,
+"desc": "One floor bounce per ball."
 },
 "spikes": {
-"cost": 50,
-"desc": "Ignore brick shields on hit.",
 "name": "Spikes"
+"cost": 50,
+"desc": "Ignore brick shields on hit."
 }
 },
 "order": Array[String](["explosive", "spikes", "miracle"])
