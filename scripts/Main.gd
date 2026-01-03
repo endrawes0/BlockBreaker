@@ -1691,6 +1691,7 @@ func _on_brick_destroyed(_brick: Node) -> void:
 					info_label.text = "Riposte deflects a wound."
 				else:
 					info_label.text = "Parry blocks a wound."
+				_spawn_wound_block_shield()
 				_update_labels()
 			elif not suppress:
 				deck_manager.add_card("wound")
@@ -1819,6 +1820,26 @@ func _spawn_wound_flyout(start_pos: Vector2) -> void:
 	tween.tween_property(fly_label, "global_position", target, 0.45).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	tween.tween_property(fly_label, "scale", Vector2(0.6, 0.6), 0.15).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	tween.tween_callback(fly_label.queue_free)
+
+func _spawn_wound_block_shield() -> void:
+	if hud == null or deck_stack == null:
+		return
+	var shield := Label.new()
+	shield.text = "🛡️"
+	shield.add_theme_font_size_override("font_size", 36)
+	if card_emoji_font:
+		shield.add_theme_font_override("font", card_emoji_font)
+	hud.add_child(shield)
+	shield.size = shield.get_minimum_size()
+	shield.pivot_offset = shield.size * 0.5
+	var center: Vector2 = deck_stack.get_global_rect().get_center()
+	shield.global_position = center - shield.size * 0.5
+	shield.scale = Vector2(0.5, 0.5)
+	shield.modulate = Color(1.0, 1.0, 1.0, 0.9)
+	var tween := get_tree().create_tween()
+	tween.tween_property(shield, "scale", Vector2(1.6, 1.6), 0.35).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.parallel().tween_property(shield, "modulate:a", 0.0, 0.35).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_callback(shield.queue_free)
 
 func _refresh_mod_buttons() -> void:
 	for child in mods_buttons.get_children():

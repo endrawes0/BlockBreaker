@@ -72,23 +72,23 @@ card_data = {
 "riposte": {
 "cost": 1,
 "desc": "If you have a Parry in hand, discard it to block a Wound this volley and destroy a random brick.",
-"emoji": "🛡️⚔️",
-"emoji_rotation": 0.0,
+"emoji": "🗡️",
+"emoji_rotation": 180.0,
 "name": "Riposte",
 "type": "offense"
 },
 "slow": {
 "cost": 1,
 "desc": "Slow balls this volley.",
-"emoji": "🐌",
+"emoji": "🦥",
 "emoji_rotation": 0.0,
-"name": "Slowness",
+"name": "Sloth",
 "type": "defense"
 },
 "twin": {
 "cost": 1,
 "desc": "Gain an extra launch this volley.",
-"emoji": "‼️",
+"emoji": "✌️",
 "emoji_rotation": 0.0,
 "name": "Twin Launch",
 "type": "offense"
