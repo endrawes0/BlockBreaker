@@ -9,6 +9,7 @@ card_data = {
 "cost": 2,
 "desc": "Destroy up to 3 random bricks.",
 "emoji": "💣",
+"emoji_rotation": 0.0,
 "name": "Bomb",
 "type": "offense"
 },
@@ -16,6 +17,7 @@ card_data = {
 "cost": 0,
 "desc": "+1 energy this turn.",
 "emoji": "🧠",
+"emoji_rotation": 0.0,
 "name": "Focus",
 "type": "utility"
 },
@@ -23,6 +25,7 @@ card_data = {
 "cost": 1,
 "desc": "Gain 5 block. Block reduces threat damage this turn.",
 "emoji": "🛡️",
+"emoji_rotation": 0.0,
 "name": "Guard",
 "type": "defense"
 },
@@ -30,6 +33,7 @@ card_data = {
 "cost": 1,
 "desc": "Paddle moves faster for 2 turns.",
 "emoji": "⚡⚡",
+"emoji_rotation": 0.0,
 "name": "Haste",
 "type": "utility"
 },
@@ -37,6 +41,7 @@ card_data = {
 "cost": 3,
 "desc": "Destroy up to 10 random bricks.",
 "emoji": "💣‼️",
+"emoji_rotation": 0.0,
 "name": "MOAB",
 "type": "offense"
 },
@@ -44,6 +49,7 @@ card_data = {
 "cost": 1,
 "desc": "Block the next Wound gained this volley.",
 "emoji": "⚔️",
+"emoji_rotation": 0.0,
 "name": "Parry",
 "type": "defense"
 },
@@ -51,6 +57,7 @@ card_data = {
 "cost": 1,
 "desc": "+1 volley damage.",
 "emoji": "👊",
+"emoji_rotation": 0.0,
 "name": "Punch",
 "type": "offense"
 },
@@ -58,6 +65,7 @@ card_data = {
 "cost": 0,
 "desc": "Draw 2 cards.",
 "emoji": "🎴🎴",
+"emoji_rotation": 0.0,
 "name": "Rally",
 "type": "utility"
 },
@@ -65,6 +73,7 @@ card_data = {
 "cost": 1,
 "desc": "If you have a Parry in hand, discard it to block a Wound this volley and destroy a random brick.",
 "emoji": "🛡️⚔️",
+"emoji_rotation": 0.0,
 "name": "Riposte",
 "type": "offense"
 },
@@ -72,6 +81,7 @@ card_data = {
 "cost": 1,
 "desc": "Slow balls this volley.",
 "emoji": "🐌",
+"emoji_rotation": 0.0,
 "name": "Slowness",
 "type": "defense"
 },
@@ -79,6 +89,7 @@ card_data = {
 "cost": 1,
 "desc": "Gain an extra launch this volley.",
 "emoji": "‼️",
+"emoji_rotation": 0.0,
 "name": "Twin Launch",
 "type": "offense"
 },
@@ -86,6 +97,7 @@ card_data = {
 "cost": 1,
 "desc": "If you have a Wound in hand, remove it and gain 2 energy.",
 "emoji": "💪",
+"emoji_rotation": 0.0,
 "name": "What Doesn't Kill Us",
 "type": "utility"
 },
@@ -93,6 +105,7 @@ card_data = {
 "cost": 1,
 "desc": "Widen paddle for 2 turns.",
 "emoji": "➖",
+"emoji_rotation": 0.0,
 "name": "Widen Paddle",
 "type": "utility"
 },
@@ -100,6 +113,7 @@ card_data = {
 "cost": 1,
 "desc": "Pay 1 energy to remove it from your deck.",
 "emoji": "🤕🗡️",
+"emoji_rotation": 0.0,
 "name": "Wound",
 "type": "curse"
 }

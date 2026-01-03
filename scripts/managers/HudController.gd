@@ -183,6 +183,7 @@ func create_card_button(card_id: String) -> Button:
 		art.add_theme_font_override("font", card_emoji_font)
 	art.set_anchors_preset(Control.PRESET_FULL_RECT)
 	art.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_apply_card_emoji_rotation(art, card_id)
 	art_frame.add_child(art)
 
 	var desc_frame := Control.new()
@@ -220,6 +221,20 @@ func _card_label(card_id: String) -> String:
 func _card_tooltip(card_id: String) -> String:
 	var card: Dictionary = card_data[card_id]
 	return "%s (%d💥)\n%s" % [card["name"], card["cost"], card["desc"]]
+
+func _apply_card_emoji_rotation(art: Control, card_id: String) -> void:
+	var card: Dictionary = card_data.get(card_id, {})
+	var rotation_degrees: float = float(card.get("emoji_rotation", 0.0))
+	if rotation_degrees == 0.0:
+		return
+	art.rotation_degrees = rotation_degrees
+	_update_card_art_pivot(art)
+	art.resized.connect(_update_card_art_pivot.bind(art))
+
+func _update_card_art_pivot(art: Control) -> void:
+	if art == null:
+		return
+	art.pivot_offset = art.size * 0.5
 
 func _apply_card_style(button: Button, card_id: String) -> void:
 	var card: Dictionary = card_data[card_id]
