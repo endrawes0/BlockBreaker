@@ -134,6 +134,8 @@ var ball_mod_order: Array[String] = []
 var ball_mod_colors: Dictionary = {}
 var reward_card_count: int = 3
 var shop_card_price: int = 0
+var shop_max_cards: int = 0
+var shop_max_hand_size: int = 0
 var shop_remove_price: int = 0
 var shop_upgrade_price: int = 0
 var shop_upgrade_hand_bonus: int = 0
@@ -142,6 +144,19 @@ var shop_vitality_max_hp_bonus: int = 0
 var shop_vitality_heal: int = 0
 var shop_reroll_base_price: int = 0
 var shop_reroll_multiplier: float = 1.0
+var shop_energy_price: int = 0
+var shop_energy_bonus: int = 0
+var shop_paddle_width_price: int = 0
+var shop_paddle_width_bonus: float = 0.0
+var shop_paddle_speed_price: int = 0
+var shop_paddle_speed_bonus_percent: float = 0.0
+var shop_reserve_ball_price: int = 0
+var shop_reserve_ball_bonus: int = 0
+var shop_discount_price: int = 0
+var shop_discount_percent: float = 0.0
+var shop_discount_max: int = 0
+var shop_entry_card_price: int = 0
+var shop_entry_card_count: int = 0
 
 var state: GameState = GameState.MAP
 
@@ -154,6 +169,8 @@ var max_floors: int = 6
 
 var max_energy: int = 3
 var energy: int = 3
+var base_max_energy: int = 3
+var max_energy_bonus: int = 0
 var block: int = 0
 var starting_hand_size: int = BASE_STARTING_HAND_SIZE
 var ball_mod_counts: Dictionary = {}
@@ -162,10 +179,13 @@ var persist_ball_mods: bool = false
 
 var volley_damage_bonus: int = 0
 var volley_ball_bonus: int = 0
+var volley_ball_bonus_base: int = 0
 var volley_ball_reserve: int = 0
 var volley_piercing: bool = false
 var volley_ball_speed_multiplier: float = 1.0
 var reserve_launch_cooldown: float = 0.0
+var shop_discount_multiplier: float = 1.0
+var shop_entry_card_bonus: int = 0
 enum ReturnPanel { NONE, MAP, REWARD, SHOP, GAMEOVER }
 
 var hud_layer_cache: int = 0
@@ -207,6 +227,7 @@ func _ready() -> void:
 		push_error("Missing balance data at %s" % BALANCE_DATA_PATH)
 		return
 	_apply_balance_data(balance_data)
+	base_max_energy = max_energy
 	outcome_rng.randomize()
 	if get_viewport():
 		get_viewport().size_changed.connect(_fit_to_viewport)
@@ -374,19 +395,40 @@ func _apply_balance_data(data: Resource) -> void:
 	card_data = data.card_data
 	card_pool = data.card_pool
 	starting_deck = data.starting_deck
-	ball_mod_data = data.ball_mod_data
-	ball_mod_order = data.ball_mod_order
-	ball_mod_colors = data.ball_mod_colors
+	var mods: Dictionary = data.ball_mods
+	ball_mod_data = mods.get("data", {})
+	ball_mod_order = mods.get("order", [])
+	ball_mod_colors = {}
+	for mod_id in ball_mod_data.keys():
+		var mod: Dictionary = ball_mod_data[mod_id]
+		if mod.has("color"):
+			ball_mod_colors[mod_id] = mod["color"]
 	reward_card_count = data.reward_card_count
-	shop_card_price = data.shop_card_price
-	shop_remove_price = data.shop_remove_price
-	shop_upgrade_price = data.shop_upgrade_price
-	shop_upgrade_hand_bonus = data.shop_upgrade_hand_bonus
-	shop_vitality_price = data.shop_vitality_price
-	shop_vitality_max_hp_bonus = data.shop_vitality_max_hp_bonus
-	shop_vitality_heal = data.shop_vitality_heal
-	shop_reroll_base_price = data.shop_reroll_base_price
-	shop_reroll_multiplier = data.shop_reroll_multiplier
+	var shop: Dictionary = data.shop_data
+	shop_card_price = int(shop.get("card_price", 0))
+	shop_max_cards = int(shop.get("max_cards", 0))
+	shop_max_hand_size = int(shop.get("max_hand_size", 0))
+	shop_remove_price = int(shop.get("remove_price", 0))
+	shop_upgrade_price = int(shop.get("upgrade_price", 0))
+	shop_upgrade_hand_bonus = int(shop.get("upgrade_hand_bonus", 0))
+	shop_vitality_price = int(shop.get("vitality_price", 0))
+	shop_vitality_max_hp_bonus = int(shop.get("vitality_max_hp_bonus", 0))
+	shop_vitality_heal = int(shop.get("vitality_heal", 0))
+	shop_reroll_base_price = int(shop.get("reroll_base_price", 0))
+	shop_reroll_multiplier = float(shop.get("reroll_multiplier", 1.0))
+	shop_energy_price = int(shop.get("energy_price", 0))
+	shop_energy_bonus = int(shop.get("energy_bonus", 0))
+	shop_paddle_width_price = int(shop.get("paddle_width_price", 0))
+	shop_paddle_width_bonus = float(shop.get("paddle_width_bonus", 0.0))
+	shop_paddle_speed_price = int(shop.get("paddle_speed_price", 0))
+	shop_paddle_speed_bonus_percent = float(shop.get("paddle_speed_bonus_percent", 0.0))
+	shop_reserve_ball_price = int(shop.get("reserve_ball_price", 0))
+	shop_reserve_ball_bonus = int(shop.get("reserve_ball_bonus", 0))
+	shop_discount_price = int(shop.get("discount_price", 0))
+	shop_discount_percent = float(shop.get("discount_percent", 0.0))
+	shop_discount_max = int(shop.get("discount_max", 0))
+	shop_entry_card_price = int(shop.get("entry_card_price", 0))
+	shop_entry_card_count = int(shop.get("entry_card_count", 0))
 
 func _fit_to_viewport() -> void:
 	var size: Vector2 = App.get_layout_size()
@@ -845,7 +887,7 @@ func _start_turn() -> void:
 	energy = max_energy
 	block = 0
 	volley_damage_bonus = 0
-	volley_ball_bonus = 0
+	volley_ball_bonus = volley_ball_bonus_base
 	volley_ball_reserve = 0
 	_update_reserve_indicator()
 	volley_piercing = false
@@ -1092,13 +1134,46 @@ func _show_shop() -> void:
 	state = GameState.SHOP
 	_show_single_panel(shop_panel)
 	info_label.text = ""
+	shop_discount_multiplier = 1.0
 	if shop_manager:
+		shop_manager.reset_shop_limits()
 		shop_manager.reset_offers(Callable(self, "_pick_random_card"))
+		_configure_shop_manager()
+	_apply_shop_entry_bonus()
 	_build_shop_buttons()
 	_focus_shop_buttons()
 	_refresh_mod_buttons()
 	_update_labels()
 	_update_volley_prompt_visibility()
+
+func _apply_shop_entry_bonus() -> void:
+	if shop_entry_card_bonus <= 0:
+		return
+	_add_shop_entry_offers(shop_entry_card_bonus, "Shop bonus")
+
+func _add_shop_entry_offers(amount: int, label_prefix: String) -> void:
+	if amount <= 0:
+		return
+	if shop_manager == null:
+		return
+	var added_cards := shop_manager.add_card_offers(Callable(self, "_pick_random_card"), amount)
+	if added_cards.is_empty():
+		return
+	_build_shop_buttons()
+	var added_names: Array[String] = []
+	for card_id in added_cards:
+		if card_data.has(card_id):
+			added_names.append(String(card_data[card_id]["name"]))
+		else:
+			added_names.append(card_id)
+	if added_names.is_empty():
+		return
+	var names_text := ""
+	for i in range(added_names.size()):
+		if i > 0:
+			names_text += ", "
+		names_text += added_names[i]
+	info_label.text = "%s: added %s." % [label_prefix, names_text]
 
 func _apply_hud_theme() -> void:
 	if hud == null:
@@ -1162,22 +1237,52 @@ func _shop_callbacks() -> Dictionary:
 		"get_deck_size": Callable(self, "_get_deck_size"),
 		"reroll": Callable(self, "_reroll_shop_cards"),
 		"upgrade_hand": Callable(self, "_upgrade_starting_hand"),
+		"get_starting_hand_size": Callable(self, "_get_starting_hand_size"),
 		"apply_vitality": Callable(self, "_apply_vitality"),
+		"apply_max_energy": Callable(self, "_apply_max_energy_buff"),
+		"get_max_energy_bonus": Callable(self, "_get_max_energy_bonus"),
+		"apply_paddle_width": Callable(self, "_apply_paddle_width_buff"),
+		"apply_paddle_speed": Callable(self, "_apply_paddle_speed_buff"),
+		"apply_reserve_ball": Callable(self, "_apply_reserve_ball_buff"),
+		"get_reserve_ball_bonus": Callable(self, "_get_reserve_ball_bonus"),
+		"apply_shop_discount": Callable(self, "_apply_shop_discount"),
+		"apply_shop_entry_cards": Callable(self, "_apply_shop_entry_cards"),
+		"refresh_shop_buttons": Callable(self, "_build_shop_buttons"),
 		"refresh_mod_buttons": Callable(self, "_refresh_mod_buttons")
 	}
+
+func _get_discounted_shop_price(price: int) -> int:
+	if price <= 0:
+		return price
+	return max(1, int(round(float(price) * shop_discount_multiplier)))
 
 func _configure_shop_manager() -> void:
 	if shop_manager == null:
 		return
 	shop_manager.configure({
 		"card_data": card_data,
-		"card_price": shop_card_price,
-		"remove_price": shop_remove_price,
+		"card_price": _get_discounted_shop_price(shop_card_price),
+		"max_card_offers": shop_max_cards,
+		"remove_price": _get_discounted_shop_price(shop_remove_price),
 		"upgrade_hand_bonus": shop_upgrade_hand_bonus,
-		"upgrade_price": shop_upgrade_price,
+		"upgrade_price": _get_discounted_shop_price(shop_upgrade_price),
+		"max_hand_size": shop_max_hand_size,
 		"vitality_max_hp_bonus": shop_vitality_max_hp_bonus,
 		"vitality_heal": shop_vitality_heal,
-		"vitality_price": shop_vitality_price,
+		"vitality_price": _get_discounted_shop_price(shop_vitality_price),
+		"energy_buff_price": _get_discounted_shop_price(shop_energy_price),
+		"energy_buff_bonus": shop_energy_bonus,
+		"paddle_width_price": _get_discounted_shop_price(shop_paddle_width_price),
+		"paddle_width_bonus": shop_paddle_width_bonus,
+		"paddle_speed_price": _get_discounted_shop_price(shop_paddle_speed_price),
+		"paddle_speed_bonus_percent": shop_paddle_speed_bonus_percent,
+		"reserve_ball_price": _get_discounted_shop_price(shop_reserve_ball_price),
+		"reserve_ball_bonus": shop_reserve_ball_bonus,
+		"shop_discount_price": shop_discount_price,
+		"shop_discount_percent": shop_discount_percent,
+		"shop_discount_max": shop_discount_max,
+		"shop_entry_card_price": _get_discounted_shop_price(shop_entry_card_price),
+		"shop_entry_card_count": shop_entry_card_count,
 		"reroll_base_price": shop_reroll_base_price,
 		"reroll_multiplier": shop_reroll_multiplier,
 		"ball_mod_data": ball_mod_data,
@@ -1202,13 +1307,66 @@ func _get_deck_size() -> int:
 	return 0
 
 func _upgrade_starting_hand(bonus: int) -> int:
-	starting_hand_size += bonus
+	if shop_max_hand_size > 0:
+		starting_hand_size = min(starting_hand_size + bonus, shop_max_hand_size)
+	else:
+		starting_hand_size += bonus
+	return starting_hand_size
+
+func _get_starting_hand_size() -> int:
 	return starting_hand_size
 
 func _apply_vitality(max_bonus: int, heal: int) -> int:
 	max_hp += max_bonus
 	hp = min(max_hp, hp + heal)
 	return max_hp
+
+func _apply_max_energy_buff(bonus: int) -> int:
+	max_energy_bonus = min(2, max_energy_bonus + bonus)
+	max_energy = base_max_energy + max_energy_bonus
+	energy = min(max_energy, energy)
+	return max_energy
+
+func _get_max_energy_bonus() -> int:
+	return max_energy_bonus
+
+func _apply_paddle_width_buff(bonus: float) -> float:
+	base_paddle_half_width += bonus
+	if paddle_buff_turns > 0:
+		paddle.set_half_width(paddle.half_width + bonus)
+	else:
+		paddle.set_half_width(base_paddle_half_width)
+	return base_paddle_half_width
+
+func _apply_paddle_speed_buff(bonus_percent: float) -> float:
+	var multiplier: float = 1.0 + (bonus_percent / 100.0)
+	base_paddle_speed *= multiplier
+	if paddle_speed_buff_turns > 0:
+		paddle.speed = base_paddle_speed * paddle_speed_multiplier
+	else:
+		paddle.speed = base_paddle_speed
+	return base_paddle_speed
+
+func _apply_reserve_ball_buff(bonus: int) -> int:
+	volley_ball_bonus_base = min(1, volley_ball_bonus_base + bonus)
+	return volley_ball_bonus_base
+
+func _get_reserve_ball_bonus() -> int:
+	return volley_ball_bonus_base
+
+func _apply_shop_discount(percent: float) -> void:
+	if percent <= 0.0:
+		return
+	var multiplier: float = 1.0 - (percent / 100.0)
+	shop_discount_multiplier *= max(0.0, multiplier)
+	_configure_shop_manager()
+	_build_shop_buttons()
+
+func _apply_shop_entry_cards(amount: int) -> int:
+	shop_entry_card_bonus += amount
+	if state == GameState.SHOP:
+		_add_shop_entry_offers(amount, "Shop Scribe")
+	return shop_entry_card_bonus
 
 func _show_rest() -> void:
 	state = GameState.REST
