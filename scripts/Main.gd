@@ -1700,9 +1700,13 @@ func _on_brick_destroyed(_brick: Node) -> void:
 					)
 				_update_labels()
 			elif not suppress:
-				deck_manager.add_card("wound")
 				if _brick is Node2D:
-					_spawn_wound_flyout((_brick as Node2D).global_position, false)
+					_spawn_wound_flyout(
+						(_brick as Node2D).global_position,
+						false,
+						-1,
+						Callable(self, "_add_wound_to_deck")
+					)
 				_update_labels()
 	if encounter_manager.check_victory():
 		_end_encounter()
@@ -1825,7 +1829,7 @@ func _update_labels() -> void:
 		max_floors
 	)
 
-func _spawn_wound_flyout(start_pos: Vector2, is_blocked: bool, reflect_target_id: int = -1) -> void:
+func _spawn_wound_flyout(start_pos: Vector2, is_blocked: bool, reflect_target_id: int = -1, on_deck_arrive: Callable = Callable()) -> void:
 	var fly_label := Label.new()
 	fly_label.text = "🗡️"
 	fly_label.position = start_pos
@@ -1836,11 +1840,17 @@ func _spawn_wound_flyout(start_pos: Vector2, is_blocked: bool, reflect_target_id
 	tween.tween_property(fly_label, "global_position", deck_center, 1.1).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	if is_blocked:
 		tween.tween_callback(_spawn_wound_block_shield)
+	if on_deck_arrive.is_valid():
+		tween.tween_callback(on_deck_arrive)
 	tween.tween_property(fly_label, "scale", Vector2(0.6, 0.6), 0.25).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	if reflect_target_id != -1:
 		tween.tween_callback(_start_riposte_reflect.bind(fly_label, reflect_target_id, 2))
 		return
 	tween.tween_callback(fly_label.queue_free)
+
+func _add_wound_to_deck() -> void:
+	deck_manager.add_card("wound")
+	_update_labels()
 
 func _start_riposte_reflect(fly_label: Label, target_id: int, retries_left: int) -> void:
 	if fly_label == null or not is_instance_valid(fly_label):
