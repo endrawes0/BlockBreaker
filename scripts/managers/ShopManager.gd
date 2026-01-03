@@ -300,7 +300,7 @@ func _build_shop_buff_buttons() -> void:
 			entry_buff.disabled = true
 			entry_buff.tooltip_text = "Shop is at max card offers."
 		entry_buff.pressed.connect(func() -> void:
-			if entry_buff.disabled:
+			if max_card_offers > 0 and card_offers.size() >= max_card_offers:
 				_call_set_info("Shop has the max card offers.")
 				purchase_failed.emit("max_cards")
 				return

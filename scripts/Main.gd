@@ -1147,7 +1147,7 @@ func _add_shop_entry_offers(amount: int, label_prefix: String) -> void:
 	var added_cards := shop_manager.add_card_offers(Callable(self, "_pick_random_card"), amount)
 	if added_cards.is_empty():
 		return
-	_build_shop_card_buttons()
+	_build_shop_buttons()
 	var added_names: Array[String] = []
 	for card_id in added_cards:
 		if card_data.has(card_id):
