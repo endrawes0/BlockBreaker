@@ -25,10 +25,6 @@ var paddle_speed_price: int = 0
 var paddle_speed_bonus_percent: float = 0.0
 var reserve_ball_price: int = 0
 var reserve_ball_bonus: int = 0
-var threat_reduction_price: int = 0
-var threat_reduction_amount: int = 0
-var energy_refund_price: int = 0
-var energy_refund_amount: int = 0
 var shop_discount_price: int = 0
 var shop_discount_percent: float = 0.0
 var shop_entry_card_price: int = 0
@@ -67,10 +63,6 @@ func configure(config: Dictionary) -> void:
 	paddle_speed_bonus_percent = float(config.get("paddle_speed_bonus_percent", 0.0))
 	reserve_ball_price = int(config.get("reserve_ball_price", 0))
 	reserve_ball_bonus = int(config.get("reserve_ball_bonus", 0))
-	threat_reduction_price = int(config.get("threat_reduction_price", 0))
-	threat_reduction_amount = int(config.get("threat_reduction_amount", 0))
-	energy_refund_price = int(config.get("energy_refund_price", 0))
-	energy_refund_amount = int(config.get("energy_refund_amount", 0))
 	shop_discount_price = int(config.get("shop_discount_price", 0))
 	shop_discount_percent = float(config.get("shop_discount_percent", 0.0))
 	shop_entry_card_price = int(config.get("shop_entry_card_price", 0))
@@ -270,42 +262,6 @@ func _build_shop_buff_buttons() -> void:
 		App.bind_button_feedback(reserve_buff)
 		shop_buffs_buttons.add_child(reserve_buff)
 
-	if threat_reduction_amount > 0:
-		var threat_buff := Button.new()
-		threat_buff.text = "Brace (-%d incoming threat) (%dg)" % [threat_reduction_amount, threat_reduction_price]
-		threat_buff.pressed.connect(func() -> void:
-			if _call_can_afford(threat_reduction_price):
-				_call_spend_gold(threat_reduction_price)
-				var new_reduction: int = _call_apply_threat_reduction(threat_reduction_amount)
-				_call_set_info("Incoming threat reduced by %d." % new_reduction)
-				_call_update_labels()
-				purchase_completed.emit()
-			else:
-				_call_set_info("Not enough gold.")
-				purchase_failed.emit("gold")
-		)
-		App.apply_neutral_button_style(threat_buff)
-		App.bind_button_feedback(threat_buff)
-		shop_buffs_buttons.add_child(threat_buff)
-
-	if energy_refund_amount > 0:
-		var refund_buff := Button.new()
-		refund_buff.text = "Rebate (refund %d energy on first card) (%dg)" % [energy_refund_amount, energy_refund_price]
-		refund_buff.pressed.connect(func() -> void:
-			if _call_can_afford(energy_refund_price):
-				_call_spend_gold(energy_refund_price)
-				var new_refund: int = _call_apply_energy_refund(energy_refund_amount)
-				_call_set_info("First card refund increased to %d energy." % new_refund)
-				_call_update_labels()
-				purchase_completed.emit()
-			else:
-				_call_set_info("Not enough gold.")
-				purchase_failed.emit("gold")
-		)
-		App.apply_neutral_button_style(refund_buff)
-		App.bind_button_feedback(refund_buff)
-		shop_buffs_buttons.add_child(refund_buff)
-
 	if shop_discount_percent > 0.0:
 		var discount_buff := Button.new()
 		discount_buff.text = "Shop Discount (-%d%% prices) (%dg)" % [int(round(shop_discount_percent)), shop_discount_price]
@@ -461,16 +417,6 @@ func _call_apply_paddle_speed(bonus_percent: float) -> float:
 func _call_apply_reserve_ball(bonus: int) -> int:
 	if callbacks.has("apply_reserve_ball") and callbacks.apply_reserve_ball.is_valid():
 		return int(callbacks.apply_reserve_ball.call(bonus))
-	return 0
-
-func _call_apply_threat_reduction(amount: int) -> int:
-	if callbacks.has("apply_threat_reduction") and callbacks.apply_threat_reduction.is_valid():
-		return int(callbacks.apply_threat_reduction.call(amount))
-	return 0
-
-func _call_apply_energy_refund(amount: int) -> int:
-	if callbacks.has("apply_energy_refund") and callbacks.apply_energy_refund.is_valid():
-		return int(callbacks.apply_energy_refund.call(amount))
 	return 0
 
 func _call_apply_shop_discount(percent: float) -> void:
