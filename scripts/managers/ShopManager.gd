@@ -178,14 +178,14 @@ func build_shop_card_buttons() -> void:
 func _build_shop_buff_buttons() -> void:
 	if shop_buffs_buttons == null:
 		return
-var upgrade := Button.new()
-upgrade.text = "Upgrade starting hand (+%d) (%dg)" % [upgrade_hand_bonus, upgrade_price]
-if max_hand_size > 0:
-	var hand_remaining: int = max(0, max_hand_size - _call_get_starting_hand_size())
-	upgrade.text = "%s (%d remaining)" % [upgrade.text, hand_remaining]
-if max_hand_size > 0 and _call_get_starting_hand_size() >= max_hand_size:
-	upgrade.disabled = true
-	upgrade.tooltip_text = "Starting hand is at max size."
+	var upgrade := Button.new()
+	upgrade.text = "Upgrade starting hand (+%d) (%dg)" % [upgrade_hand_bonus, upgrade_price]
+	if max_hand_size > 0:
+		var hand_remaining: int = max(0, max_hand_size - _call_get_starting_hand_size())
+		upgrade.text = "%s (%d remaining)" % [upgrade.text, hand_remaining]
+	if max_hand_size > 0 and _call_get_starting_hand_size() >= max_hand_size:
+		upgrade.disabled = true
+		upgrade.tooltip_text = "Starting hand is at max size."
 	upgrade.pressed.connect(func() -> void:
 		if max_hand_size > 0 and _call_get_starting_hand_size() >= max_hand_size:
 			_call_set_info("Starting hand is at max size.")
