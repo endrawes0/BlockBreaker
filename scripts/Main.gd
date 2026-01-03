@@ -1878,6 +1878,9 @@ func _start_riposte_reflect(fly_label_id: int, target_id: int, retries_left: int
 		"retries_left": retries_left,
 		"tween": tween
 	}
+	var direction := (target_node as Node2D).global_position - (fly_label as Node2D).global_position
+	if direction.length_squared() > 0.0:
+		(fly_label as Node2D).rotation = direction.angle() + PI
 	tween.tween_property(
 		fly_label as Object,
 		"global_position",
