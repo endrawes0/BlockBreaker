@@ -12,6 +12,20 @@ card_data = {
 "name": "Bomb",
 "type": "offense"
 },
+"moab": {
+"cost": 3,
+"desc": "Destroy up to 10 random bricks.",
+"emoji": "💥💣",
+"name": "MOAB",
+"type": "offense"
+},
+"parry": {
+"cost": 1,
+"desc": "Block the next Wound gained this volley.",
+"emoji": "🛡️",
+"name": "Parry",
+"type": "defense"
+},
 "focus": {
 "cost": 0,
 "desc": "+1 energy this turn.",
@@ -46,6 +60,13 @@ card_data = {
 "emoji": "🎴🎴",
 "name": "Rally",
 "type": "utility"
+},
+"riposte": {
+"cost": 1,
+"desc": "If you have a Parry in hand, discard it to block a Wound this volley and destroy a random brick.",
+"emoji": "⚔️",
+"name": "Riposte",
+"type": "offense"
 },
 "slow": {
 "cost": 1,
@@ -83,7 +104,7 @@ card_data = {
 "type": "curse"
 }
 }
-card_pool = Array[String](["punch", "twin", "guard", "widen", "bomb", "rally", "focus", "haste", "slow", "what_doesnt_kill_us"])
+card_pool = Array[String](["punch", "twin", "guard", "widen", "bomb", "moab", "parry", "rally", "riposte", "focus", "haste", "slow", "what_doesnt_kill_us"])
 starting_deck = Array[String](["punch", "punch", "punch", "punch", "twin", "twin", "guard", "guard", "rally", "focus"])
 ball_mods = {
 "data": {
