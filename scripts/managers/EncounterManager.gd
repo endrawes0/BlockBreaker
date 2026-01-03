@@ -12,6 +12,7 @@ var brick_size: Vector2
 var brick_gap: Vector2
 var top_margin: float
 var row_palette: Array[Color] = []
+var bricks: Array[Node] = []
 
 var pattern_registry: PatternRegistry = PatternRegistry.new()
 var config_library: Array[EncounterConfig] = []
@@ -80,11 +81,19 @@ func start_encounter(config: EncounterConfig, on_brick_destroyed: Callable, on_b
 		_spawn_boss_core(config, on_brick_destroyed, on_brick_damaged)
 	encounter_started.emit(config)
 
+func get_bricks() -> Array[Node]:
+	var valid: Array[Node] = []
+	for brick in bricks:
+		if is_instance_valid(brick):
+			valid.append(brick)
+	bricks = valid
+	return bricks.duplicate()
+
 func calculate_threat(multiplier: float = 1.0) -> int:
-	if bricks_root == null or bricks_root.get_child_count() == 0:
+	if bricks.is_empty():
 		return 0
 	var total: int = 0
-	for brick in bricks_root.get_children():
+	for brick in get_bricks():
 		if brick.has_method("get_threat"):
 			total += brick.get_threat()
 	return int(round(float(total) * max(0.0, multiplier)))
@@ -93,9 +102,7 @@ func check_victory() -> bool:
 	return calculate_threat() <= 0
 
 func regen_bricks_on_drop() -> void:
-	if bricks_root == null:
-		return
-	for brick in bricks_root.get_children():
+	for brick in get_bricks():
 		if brick.has_method("on_ball_drop"):
 			brick.on_ball_drop()
 
@@ -140,6 +147,7 @@ func _spawn_brick(row: int, col: int, _rows: int, cols: int, hp_value: int, colo
 		brick.position = Vector2(x, y)
 	brick.add_to_group("bricks")
 	bricks_root.add_child(brick)
+	_register_brick(brick)
 	if on_brick_destroyed.is_valid():
 		brick.destroyed.connect(on_brick_destroyed)
 	if on_brick_damaged.is_valid():
@@ -182,8 +190,17 @@ func _row_color(row: int) -> Color:
 func _clear_bricks() -> void:
 	if bricks_root == null:
 		return
+	bricks.clear()
 	for child in bricks_root.get_children():
 		child.queue_free()
+
+func _register_brick(brick: Node) -> void:
+	bricks.append(brick)
+	if brick.has_signal("destroyed"):
+		brick.destroyed.connect(_on_brick_removed)
+
+func _on_brick_removed(brick: Node) -> void:
+	bricks.erase(brick)
 
 func _pick_pattern(floor_index: int, is_boss: bool) -> String:
 	if is_boss:

@@ -1746,21 +1746,26 @@ func _apply_card_effect(card_id: String, instance_id: int) -> bool:
 	return card_effect_registry.apply(card_id, self, instance_id)
 
 func _destroy_random_bricks(amount: int) -> void:
-	var bricks: Array = bricks_root.get_children()
+	var bricks: Array = _get_active_bricks()
 	_shuffle_array(bricks)
 	for i in range(min(amount, bricks.size())):
 		var brick: Node = bricks[i]
 		_apply_brick_damage_cap(brick, 999)
 
 func _pick_random_brick() -> Node:
-	if bricks_root == null:
-		return null
-	var bricks: Array = bricks_root.get_children()
+	var bricks: Array = _get_active_bricks()
 	_shuffle_array(bricks)
 	for brick in bricks:
 		if brick != null:
 			return brick
 	return null
+
+func _get_active_bricks() -> Array:
+	if encounter_manager != null and encounter_manager.has_method("get_bricks"):
+		return encounter_manager.get_bricks()
+	if bricks_root == null:
+		return []
+	return bricks_root.get_children()
 
 func _apply_brick_damage_cap(brick: Node, amount: int) -> void:
 	if brick == null:
