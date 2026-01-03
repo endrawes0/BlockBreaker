@@ -6,6 +6,7 @@ class_name ActConfig
 @export var combat_intro: String = "Combat: Plan your volley, then launch."
 @export var elite_intro: String = "Elite: Plan your volley, then launch."
 @export var boss_intro: String = "Boss fight. Plan carefully."
+@export var boss_label: String = "👹"
 
 @export var combat_gold_reward: int = 25
 @export var elite_gold_reward: int = 25

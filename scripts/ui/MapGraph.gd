@@ -20,11 +20,6 @@ const TYPE_LABELS: Dictionary = {
 	"boss": "👹",
 	"victory": "V"
 }
-const BOSS_LABELS_BY_ACT: Dictionary = {
-	0: "👹",
-	1: "🦑",
-	2: "👑"
-}
 const TYPE_NAMES: Dictionary = {
 	"combat": "Combat",
 	"elite": "Elite",
@@ -46,8 +41,7 @@ var visible_edges: Array[Dictionary] = []
 var has_visibility_data: bool = false
 var visible_outgoing: Dictionary = {}
 var node_positions: Dictionary = {}
-var active_act_index: int = 0
-var act_count: int = 1
+var boss_label: String = ""
 
 func set_plan(plan: Dictionary, choices: Array[Dictionary]) -> void:
 	rooms = plan.get("rooms", [])
@@ -58,8 +52,7 @@ func set_plan(plan: Dictionary, choices: Array[Dictionary]) -> void:
 	visible_edges = plan.get("visible_edges", [])
 	has_visibility_data = bool(plan.get("has_visibility_data", false))
 	visible_outgoing = _build_outgoing_edges(visible_edges)
-	active_act_index = int(plan.get("active_act_index", 0))
-	act_count = max(1, int(plan.get("act_count", 1)))
+	boss_label = String(plan.get("boss_label", ""))
 	choice_ids = []
 	for choice in choices:
 		choice_ids.append(String(choice.get("id", "")))
@@ -264,7 +257,9 @@ func _node_radius() -> float:
 	return clamp(min(size.x, size.y) * 0.045, 10.0, 18.0)
 
 func _boss_label() -> String:
-	return String(BOSS_LABELS_BY_ACT.get(active_act_index, TYPE_LABELS.get("boss", "B")))
+	if boss_label == "":
+		return String(TYPE_LABELS.get("boss", "B"))
+	return boss_label
 
 func _resolve_next_ids(room: Dictionary) -> Array[String]:
 	var resolved: Array[String] = []
