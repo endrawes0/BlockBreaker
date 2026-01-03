@@ -861,6 +861,7 @@ func _end_turn() -> void:
 	_discard_hand()
 	var incoming: int = max(0, encounter_manager.calculate_threat(act_threat_multiplier) - block)
 	hp -= incoming
+	hp = max(0, hp)
 	info_label.text = "You take %d damage." % incoming
 	if hp <= 0:
 		_show_game_over()
@@ -961,6 +962,7 @@ func _apply_volley_threat() -> void:
 	if encounter_manager:
 		threat = encounter_manager.calculate_threat(act_threat_multiplier)
 	hp -= threat
+	hp = max(0, hp)
 	if hp <= 0:
 		_show_game_over()
 		return
@@ -1020,6 +1022,7 @@ func _play_planning_victory_message(message: String) -> void:
 	(toast_data["toast"] as Label).queue_free()
 
 func _apply_victory_revive() -> void:
+	hp = max(0, hp)
 	hp = min(max_hp, hp + VICTORY_REVIVE_HP_BONUS)
 	_update_labels()
 	var toast_data := _create_toast(VICTORY_REVIVE_TOAST, Color(1.0, 0.9, 0.2, 1.0))
