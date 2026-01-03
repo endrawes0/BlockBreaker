@@ -186,6 +186,9 @@ var volley_ball_speed_multiplier: float = 1.0
 var reserve_launch_cooldown: float = 0.0
 var shop_discount_multiplier: float = 1.0
 var shop_entry_card_bonus: int = 0
+var parry_wound_active: bool = false
+var riposte_wound_active: bool = false
+var riposte_flyouts: Dictionary = {}
 enum ReturnPanel { NONE, MAP, REWARD, SHOP, GAMEOVER }
 
 var hud_layer_cache: int = 0
@@ -392,9 +395,14 @@ func _get_encounter_gold_reward() -> int:
 	return active_act_config.combat_gold_reward
 
 func _apply_balance_data(data: Resource) -> void:
-	card_data = data.card_data
-	card_pool = data.card_pool
-	starting_deck = data.starting_deck
+	if data.card_config != null:
+		card_data = data.card_config.card_data
+		card_pool = data.card_config.card_pool
+		starting_deck = data.card_config.starting_deck
+	else:
+		card_data = data.card_data
+		card_pool = data.card_pool
+		starting_deck = data.starting_deck
 	var mods: Dictionary = data.ball_mods
 	ball_mod_data = mods.get("data", {})
 	ball_mod_order = mods.get("order", [])
@@ -889,6 +897,8 @@ func _start_turn() -> void:
 	volley_damage_bonus = 0
 	volley_ball_bonus = volley_ball_bonus_base
 	volley_ball_reserve = 0
+	parry_wound_active = false
+	riposte_wound_active = false
 	_update_reserve_indicator()
 	volley_piercing = false
 	volley_ball_speed_multiplier = 1.0
@@ -1674,10 +1684,30 @@ func _on_brick_destroyed(_brick: Node) -> void:
 			var suppress: bool = false
 			if _brick.has_method("get"):
 				suppress = bool(_brick.get("suppress_curse_on_destroy"))
-			if not suppress:
-				deck_manager.add_card("wound")
+			if not suppress and parry_wound_active:
+				var riposte_target_id: int = -1
+				if riposte_wound_active:
+					var riposte_target: Node = _pick_random_brick()
+					if riposte_target != null and riposte_target is Node2D:
+						riposte_target_id = riposte_target.get_instance_id()
+					info_label.text = "Riposte deflects a wound."
+				else:
+					info_label.text = "Parry blocks a wound."
 				if _brick is Node2D:
-					_spawn_wound_flyout((_brick as Node2D).global_position)
+					_spawn_wound_flyout(
+						(_brick as Node2D).global_position,
+						true,
+						riposte_target_id
+					)
+				_update_labels()
+			elif not suppress:
+				if _brick is Node2D:
+					_spawn_wound_flyout(
+						(_brick as Node2D).global_position,
+						false,
+						-1,
+						Callable(self, "_add_wound_to_deck")
+					)
 				_update_labels()
 	if encounter_manager.check_victory():
 		_end_encounter()
@@ -1716,11 +1746,26 @@ func _apply_card_effect(card_id: String, instance_id: int) -> bool:
 	return card_effect_registry.apply(card_id, self, instance_id)
 
 func _destroy_random_bricks(amount: int) -> void:
-	var bricks: Array = bricks_root.get_children()
+	var bricks: Array = _get_active_bricks()
 	_shuffle_array(bricks)
 	for i in range(min(amount, bricks.size())):
 		var brick: Node = bricks[i]
 		_apply_brick_damage_cap(brick, 999)
+
+func _pick_random_brick() -> Node:
+	var bricks: Array = _get_active_bricks()
+	_shuffle_array(bricks)
+	for brick in bricks:
+		if brick != null:
+			return brick
+	return null
+
+func _get_active_bricks() -> Array:
+	if encounter_manager != null and encounter_manager.has_method("get_bricks"):
+		return encounter_manager.get_bricks()
+	if bricks_root == null:
+		return []
+	return bricks_root.get_children()
 
 func _apply_brick_damage_cap(brick: Node, amount: int) -> void:
 	if brick == null:
@@ -1790,17 +1835,132 @@ func _update_labels() -> void:
 		max_floors
 	)
 
-func _spawn_wound_flyout(start_pos: Vector2) -> void:
+func _spawn_wound_flyout(start_pos: Vector2, is_blocked: bool, reflect_target_id: int = -1, on_deck_arrive: Callable = Callable()) -> void:
 	var fly_label := Label.new()
-	fly_label.text = "🤕"
+	fly_label.text = "🗡️"
 	fly_label.position = start_pos
 	fly_label.add_theme_font_size_override("font_size", 20)
 	hud.add_child(fly_label)
-	var target: Vector2 = deck_stack.get_global_rect().get_center()
+	var deck_center: Vector2 = deck_stack.get_global_rect().get_center()
 	var tween := get_tree().create_tween()
-	tween.tween_property(fly_label, "global_position", target, 0.45).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	tween.tween_property(fly_label, "scale", Vector2(0.6, 0.6), 0.15).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	tween.tween_property(fly_label, "global_position", deck_center, 1.1).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	if is_blocked:
+		tween.tween_callback(_spawn_wound_block_shield)
+	if on_deck_arrive.is_valid():
+		tween.tween_callback(on_deck_arrive)
+	tween.tween_property(fly_label, "scale", Vector2(0.6, 0.6), 0.25).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	if reflect_target_id != -1:
+		var fly_label_id: int = fly_label.get_instance_id()
+		tween.tween_callback(_start_riposte_reflect.bind(fly_label_id, reflect_target_id, 2))
+		return
 	tween.tween_callback(fly_label.queue_free)
+
+func _add_wound_to_deck() -> void:
+	deck_manager.add_card("wound")
+	_update_labels()
+
+func _start_riposte_reflect(fly_label_id: int, target_id: int, retries_left: int) -> void:
+	var fly_label: Object = instance_from_id(fly_label_id)
+	if fly_label == null or not is_instance_valid(fly_label):
+		return
+	var target: Object = instance_from_id(target_id)
+	if target == null or not is_instance_valid(target):
+		_retarget_riposte_flyout(fly_label_id, retries_left)
+		return
+	var target_node := target as Node
+	if target_node.has_signal("destroyed"):
+		target_node.destroyed.connect(
+			_on_riposte_target_destroyed.bind(fly_label_id),
+			CONNECT_ONE_SHOT
+		)
+	var tween := get_tree().create_tween()
+	riposte_flyouts[fly_label_id] = {
+		"retries_left": retries_left,
+		"tween": tween
+	}
+	var fly_control: Control = fly_label as Control
+	var target_node_2d: Node2D = target_node as Node2D
+	if fly_control != null and target_node_2d != null:
+		var direction := target_node_2d.global_position - fly_control.global_position
+		if direction.length_squared() > 0.0:
+			fly_control.rotation = direction.angle() + PI
+	tween.tween_property(
+		fly_label as Object,
+		"global_position",
+		(target_node as Node2D).global_position,
+		0.6
+	).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_callback(_resolve_riposte_hit.bind(fly_label_id, target_id))
+
+func _on_riposte_target_destroyed(_brick: Node, fly_label_id: int) -> void:
+	var retries_left: int = int(riposte_flyouts.get(fly_label_id, {}).get("retries_left", 0))
+	_retarget_riposte_flyout(fly_label_id, retries_left)
+
+func _retarget_riposte_flyout(fly_label_id: int, retries_left: int) -> void:
+	var fly_label: Object = instance_from_id(fly_label_id)
+	if fly_label == null or not is_instance_valid(fly_label):
+		riposte_flyouts.erase(fly_label_id)
+		return
+	if retries_left <= 0:
+		riposte_flyouts.erase(fly_label_id)
+		(fly_label as Node).queue_free()
+		return
+	var existing: Dictionary = riposte_flyouts.get(fly_label_id, {})
+	var tween: Tween = existing.get("tween", null)
+	if tween != null and is_instance_valid(tween):
+		tween.kill()
+	var new_target: Node = _pick_random_brick()
+	if new_target == null or not (new_target is Node2D):
+		riposte_flyouts.erase(fly_label_id)
+		(fly_label as Node).queue_free()
+		return
+	riposte_flyouts[fly_label_id] = {
+		"retries_left": retries_left - 1,
+		"tween": tween
+	}
+	_start_riposte_reflect(fly_label_id, new_target.get_instance_id(), retries_left - 1)
+
+func _resolve_riposte_hit(fly_label_id: int, target_id: int) -> void:
+	var fly_label: Object = instance_from_id(fly_label_id)
+	if fly_label == null or not is_instance_valid(fly_label):
+		riposte_flyouts.erase(fly_label_id)
+		return
+	var target: Object = instance_from_id(target_id)
+	if target == null or not is_instance_valid(target):
+		var retries_left: int = int(riposte_flyouts.get(fly_label_id, {}).get("retries_left", 0))
+		_retarget_riposte_flyout(fly_label_id, retries_left)
+		return
+	_apply_brick_damage_cap(target as Node, 999)
+	riposte_flyouts.erase(fly_label_id)
+	(fly_label as Node).queue_free()
+
+func _spawn_wound_block_shield() -> void:
+	if hud == null or deck_stack == null:
+		return
+	var deck_rect := deck_stack.get_global_rect()
+	var shield_container := Control.new()
+	shield_container.size = deck_rect.size
+	shield_container.global_position = deck_rect.position
+	shield_container.pivot_offset = deck_rect.size * 0.5
+	shield_container.scale = Vector2.ONE * 0.2
+	shield_container.modulate = Color(1.0, 1.0, 1.0, 0.9)
+	hud.add_child(shield_container)
+
+	var shield := Label.new()
+	shield.text = "🛡️"
+	shield.add_theme_font_size_override("font_size", 36)
+	shield.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	shield.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	shield.autowrap_mode = TextServer.AUTOWRAP_OFF
+	if card_emoji_font:
+		shield.add_theme_font_override("font", card_emoji_font)
+	shield.set_anchors_preset(Control.PRESET_FULL_RECT)
+	shield.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	shield_container.add_child(shield)
+	var tween := get_tree().create_tween()
+	tween.tween_property(shield_container, "scale", Vector2.ONE * 1.4, 0.55).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.parallel().tween_property(shield_container, "modulate:a", 0.0, 0.55).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_callback(shield_container.queue_free)
 
 func _refresh_mod_buttons() -> void:
 	for child in mods_buttons.get_children():
@@ -1940,8 +2100,8 @@ func _show_deck_panel() -> void:
 		return
 	_capture_deck_return_context()
 	_show_single_panel(deck_panel)
-	info_label.text = "Deck contents."
-	hud_controller.populate_card_container(deck_list, deck_manager.deck, Callable(), false, 4)
+	info_label.text = "Draw pile contents."
+	hud_controller.populate_card_container(deck_list, deck_manager.draw_pile, Callable(), false, 4)
 
 func _show_discard_panel() -> void:
 	if state == GameState.GAME_OVER or state == GameState.VICTORY:

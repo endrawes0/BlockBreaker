@@ -8,6 +8,9 @@ const TwinCardEffect = preload("res://scripts/cards/TwinCardEffect.gd")
 const GuardCardEffect = preload("res://scripts/cards/GuardCardEffect.gd")
 const WidenCardEffect = preload("res://scripts/cards/WidenCardEffect.gd")
 const BombCardEffect = preload("res://scripts/cards/BombCardEffect.gd")
+const MoabCardEffect = preload("res://scripts/cards/MoabCardEffect.gd")
+const ParryCardEffect = preload("res://scripts/cards/ParryCardEffect.gd")
+const RiposteCardEffect = preload("res://scripts/cards/RiposteCardEffect.gd")
 const RallyCardEffect = preload("res://scripts/cards/RallyCardEffect.gd")
 const FocusCardEffect = preload("res://scripts/cards/FocusCardEffect.gd")
 const HasteCardEffect = preload("res://scripts/cards/HasteCardEffect.gd")
@@ -24,6 +27,9 @@ func _init() -> void:
 		"guard": GuardCardEffect.new(),
 		"widen": WidenCardEffect.new(),
 		"bomb": BombCardEffect.new(),
+		"moab": MoabCardEffect.new(),
+		"parry": ParryCardEffect.new(),
+		"riposte": RiposteCardEffect.new(),
 		"rally": RallyCardEffect.new(),
 		"focus": FocusCardEffect.new(),
 		"haste": HasteCardEffect.new(),
