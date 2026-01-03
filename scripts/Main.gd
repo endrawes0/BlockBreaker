@@ -186,8 +186,8 @@ var volley_ball_speed_multiplier: float = 1.0
 var reserve_launch_cooldown: float = 0.0
 var shop_discount_multiplier: float = 1.0
 var shop_entry_card_bonus: int = 0
-var parry_wound_blocks: int = 0
-var riposte_wound_blocks: int = 0
+var parry_wound_active: bool = false
+var riposte_wound_active: bool = false
 enum ReturnPanel { NONE, MAP, REWARD, SHOP, GAMEOVER }
 
 var hud_layer_cache: int = 0
@@ -896,8 +896,8 @@ func _start_turn() -> void:
 	volley_damage_bonus = 0
 	volley_ball_bonus = volley_ball_bonus_base
 	volley_ball_reserve = 0
-	parry_wound_blocks = 0
-	riposte_wound_blocks = 0
+	parry_wound_active = false
+	riposte_wound_active = false
 	_update_reserve_indicator()
 	volley_piercing = false
 	volley_ball_speed_multiplier = 1.0
@@ -1683,14 +1683,10 @@ func _on_brick_destroyed(_brick: Node) -> void:
 			var suppress: bool = false
 			if _brick.has_method("get"):
 				suppress = bool(_brick.get("suppress_curse_on_destroy"))
-			if not suppress and parry_wound_blocks != 0:
-				if parry_wound_blocks > 0:
-					parry_wound_blocks -= 1
+			if not suppress and parry_wound_active:
 				var riposte_target_pos = null
 				var riposte_on_arrive := Callable()
-				if riposte_wound_blocks != 0:
-					if riposte_wound_blocks > 0:
-						riposte_wound_blocks -= 1
+				if riposte_wound_active:
 					var riposte_target: Node = _pick_random_brick()
 					if riposte_target != null and riposte_target is Node2D:
 						riposte_target_pos = (riposte_target as Node2D).global_position
