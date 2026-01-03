@@ -94,8 +94,7 @@ func calculate_threat(multiplier: float = 1.0) -> int:
 		return 0
 	var total: int = 0
 	for brick in get_bricks():
-		if brick.has_method("get_threat"):
-			total += brick.get_threat()
+		total += brick.get_threat()
 	return int(round(float(total) * max(0.0, multiplier)))
 
 func check_victory() -> bool:
