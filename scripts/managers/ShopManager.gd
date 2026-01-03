@@ -178,203 +178,144 @@ func build_shop_card_buttons() -> void:
 func _build_shop_buff_buttons() -> void:
 	if shop_buffs_buttons == null:
 		return
-	var upgrade := Button.new()
-	upgrade.text = "Upgrade starting hand (+%d) (%dg)" % [upgrade_hand_bonus, upgrade_price]
+	var upgrade_text := "Upgrade starting hand (+%d) (%dg)" % [upgrade_hand_bonus, upgrade_price]
 	if max_hand_size > 0:
 		var hand_remaining: int = max(0, max_hand_size - _call_get_starting_hand_size())
-		upgrade.text = "%s (%d remaining)" % [upgrade.text, hand_remaining]
-	if max_hand_size > 0 and _call_get_starting_hand_size() >= max_hand_size:
-		upgrade.disabled = true
-		upgrade.tooltip_text = "Starting hand is at max size."
-	upgrade.pressed.connect(func() -> void:
-		if max_hand_size > 0 and _call_get_starting_hand_size() >= max_hand_size:
-			_call_set_info("Starting hand is at max size.")
-			purchase_failed.emit("hand_max")
-			return
-		if _call_can_afford(upgrade_price):
-			_call_spend_gold(upgrade_price)
-			var new_size: int = _call_upgrade_hand(upgrade_hand_bonus)
-			_call_set_info("Starting hand increased to %d." % new_size)
-			_call_update_labels()
-			_call_refresh_shop_buttons()
-			purchase_completed.emit()
-		else:
-			_call_set_info("Not enough gold.")
-			purchase_failed.emit("gold")
+		upgrade_text = "%s (%d remaining)" % [upgrade_text, hand_remaining]
+	var upgrade_disabled := max_hand_size > 0 and _call_get_starting_hand_size() >= max_hand_size
+	_add_shop_buff_button(
+		upgrade_text,
+		func() -> void:
+			if max_hand_size > 0 and _call_get_starting_hand_size() >= max_hand_size:
+				_call_set_info("Starting hand is at max size.")
+				purchase_failed.emit("hand_max")
+				return
+			_attempt_purchase(upgrade_price, func() -> void:
+				var new_size: int = _call_upgrade_hand(upgrade_hand_bonus)
+				_call_set_info("Starting hand increased to %d." % new_size)
+				_call_refresh_shop_buttons()
+			)
+		,
+		upgrade_disabled,
+		"Starting hand is at max size."
 	)
-	App.apply_neutral_button_style(upgrade)
-	App.bind_button_feedback(upgrade)
-	shop_buffs_buttons.add_child(upgrade)
 
-	var vitality_buff := Button.new()
-	vitality_buff.text = "Vitality (+%d max HP, heal %d) (%dg)" % [
+	var vitality_text := "Vitality (+%d max HP, heal %d) (%dg)" % [
 		vitality_max_hp_bonus,
 		vitality_heal,
 		vitality_price
 	]
-	vitality_buff.pressed.connect(func() -> void:
-		if _call_can_afford(vitality_price):
-			_call_spend_gold(vitality_price)
+	_add_shop_buff_button(vitality_text, func() -> void:
+		_attempt_purchase(vitality_price, func() -> void:
 			var new_max: int = _call_apply_vitality(vitality_max_hp_bonus, vitality_heal)
 			_call_set_info("Max HP increased to %d." % new_max)
-			_call_update_labels()
-			purchase_completed.emit()
-		else:
-			_call_set_info("Not enough gold.")
-			purchase_failed.emit("gold")
+		)
 	)
-	App.apply_neutral_button_style(vitality_buff)
-	App.bind_button_feedback(vitality_buff)
-	shop_buffs_buttons.add_child(vitality_buff)
 
 	if energy_buff_bonus > 0:
-		var energy_buff := Button.new()
 		var max_energy_remaining: int = 2 - _call_get_max_energy_bonus()
-		energy_buff.text = "Surge (+%d max energy) (%dg)" % [energy_buff_bonus, energy_buff_price]
-		energy_buff.text = "%s (%d remaining)" % [energy_buff.text, max(0, max_energy_remaining)]
-		if max_energy_remaining <= 0:
-			energy_buff.disabled = true
-			energy_buff.tooltip_text = "Max energy bonus is capped at 2."
-		energy_buff.pressed.connect(func() -> void:
-			if _call_get_max_energy_bonus() >= 2:
-				_call_set_info("Max energy bonus is capped.")
-				purchase_failed.emit("energy_max")
-				return
-			if _call_can_afford(energy_buff_price):
-				_call_spend_gold(energy_buff_price)
-				var new_max: int = _call_apply_max_energy(energy_buff_bonus)
-				_call_set_info("Max energy increased to %d." % new_max)
-				_call_update_labels()
-				_call_refresh_shop_buttons()
-				purchase_completed.emit()
-			else:
-				_call_set_info("Not enough gold.")
-				purchase_failed.emit("gold")
+		var energy_text := "Surge (+%d max energy) (%dg)" % [energy_buff_bonus, energy_buff_price]
+		energy_text = "%s (%d remaining)" % [energy_text, max(0, max_energy_remaining)]
+		_add_shop_buff_button(
+			energy_text,
+			func() -> void:
+				if _call_get_max_energy_bonus() >= 2:
+					_call_set_info("Max energy bonus is capped.")
+					purchase_failed.emit("energy_max")
+					return
+				_attempt_purchase(energy_buff_price, func() -> void:
+					var new_max: int = _call_apply_max_energy(energy_buff_bonus)
+					_call_set_info("Max energy increased to %d." % new_max)
+					_call_refresh_shop_buttons()
+				)
+			,
+			max_energy_remaining <= 0,
+			"Max energy bonus is capped at 2."
 		)
-		App.apply_neutral_button_style(energy_buff)
-		App.bind_button_feedback(energy_buff)
-		shop_buffs_buttons.add_child(energy_buff)
 
 	if paddle_width_bonus > 0.0:
-		var width_buff := Button.new()
-		width_buff.text = "Wider Paddle (+%d width) (%dg)" % [int(round(paddle_width_bonus)), paddle_width_price]
-		width_buff.pressed.connect(func() -> void:
-			if _call_can_afford(paddle_width_price):
-				_call_spend_gold(paddle_width_price)
+		var width_text := "Wider Paddle (+%d width) (%dg)" % [int(round(paddle_width_bonus)), paddle_width_price]
+		_add_shop_buff_button(width_text, func() -> void:
+			_attempt_purchase(paddle_width_price, func() -> void:
 				var new_width: float = _call_apply_paddle_width(paddle_width_bonus)
 				_call_set_info("Base paddle width increased to %d." % int(round(new_width)))
-				_call_update_labels()
-				purchase_completed.emit()
-			else:
-				_call_set_info("Not enough gold.")
-				purchase_failed.emit("gold")
+			)
 		)
-		App.apply_neutral_button_style(width_buff)
-		App.bind_button_feedback(width_buff)
-		shop_buffs_buttons.add_child(width_buff)
 
 	if paddle_speed_bonus_percent > 0.0:
-		var speed_buff := Button.new()
-		speed_buff.text = "Paddle Speed (+%d%%) (%dg)" % [int(round(paddle_speed_bonus_percent)), paddle_speed_price]
-		speed_buff.pressed.connect(func() -> void:
-			if _call_can_afford(paddle_speed_price):
-				_call_spend_gold(paddle_speed_price)
+		var speed_text := "Paddle Speed (+%d%%) (%dg)" % [int(round(paddle_speed_bonus_percent)), paddle_speed_price]
+		_add_shop_buff_button(speed_text, func() -> void:
+			_attempt_purchase(paddle_speed_price, func() -> void:
 				var new_speed: float = _call_apply_paddle_speed(paddle_speed_bonus_percent)
 				_call_set_info("Paddle speed increased to %d." % int(round(new_speed)))
-				_call_update_labels()
-				purchase_completed.emit()
-			else:
-				_call_set_info("Not enough gold.")
-				purchase_failed.emit("gold")
+			)
 		)
-		App.apply_neutral_button_style(speed_buff)
-		App.bind_button_feedback(speed_buff)
-		shop_buffs_buttons.add_child(speed_buff)
 
 	if reserve_ball_bonus > 0:
-		var reserve_buff := Button.new()
 		var reserve_remaining: int = 1 - _call_get_reserve_ball_bonus()
-		reserve_buff.text = "Reserve Ball (+%d per volley) (%dg)" % [reserve_ball_bonus, reserve_ball_price]
-		reserve_buff.text = "%s (%d remaining)" % [reserve_buff.text, max(0, reserve_remaining)]
-		if reserve_remaining <= 0:
-			reserve_buff.disabled = true
-			reserve_buff.tooltip_text = "Reserve ball bonus is maxed out."
-		reserve_buff.pressed.connect(func() -> void:
-			if _call_get_reserve_ball_bonus() >= 1:
-				_call_set_info("Reserve ball bonus is maxed out.")
-				purchase_failed.emit("reserve_max")
-				return
-			if _call_can_afford(reserve_ball_price):
-				_call_spend_gold(reserve_ball_price)
-				var new_bonus: int = _call_apply_reserve_ball(reserve_ball_bonus)
-				_call_set_info("Reserve balls per volley increased to %d." % new_bonus)
-				_call_update_labels()
-				_call_refresh_shop_buttons()
-				purchase_completed.emit()
-			else:
-				_call_set_info("Not enough gold.")
-				purchase_failed.emit("gold")
+		var reserve_text := "Reserve Ball (+%d per volley) (%dg)" % [reserve_ball_bonus, reserve_ball_price]
+		reserve_text = "%s (%d remaining)" % [reserve_text, max(0, reserve_remaining)]
+		_add_shop_buff_button(
+			reserve_text,
+			func() -> void:
+				if _call_get_reserve_ball_bonus() >= 1:
+					_call_set_info("Reserve ball bonus is maxed out.")
+					purchase_failed.emit("reserve_max")
+					return
+				_attempt_purchase(reserve_ball_price, func() -> void:
+					var new_bonus: int = _call_apply_reserve_ball(reserve_ball_bonus)
+					_call_set_info("Reserve balls per volley increased to %d." % new_bonus)
+					_call_refresh_shop_buttons()
+				)
+			,
+			reserve_remaining <= 0,
+			"Reserve ball bonus is maxed out."
 		)
-		App.apply_neutral_button_style(reserve_buff)
-		App.bind_button_feedback(reserve_buff)
-		shop_buffs_buttons.add_child(reserve_buff)
 
 	if shop_discount_percent > 0.0:
-		var discount_buff := Button.new()
 		var remaining_discounts: int = _get_discount_remaining()
-		discount_buff.text = "Shop Discount (-%d%% prices) (%dg)" % [int(round(shop_discount_percent)), shop_discount_price]
+		var discount_text := "Shop Discount (-%d%% prices) (%dg)" % [int(round(shop_discount_percent)), shop_discount_price]
 		if shop_discount_max > 0:
-			discount_buff.text = "%s (%d remaining)" % [discount_buff.text, remaining_discounts]
-		if shop_discount_max > 0 and remaining_discounts <= 0:
-			discount_buff.disabled = true
-			discount_buff.tooltip_text = "Shop discounts are maxed out."
-		discount_buff.pressed.connect(func() -> void:
-			var press_remaining: int = _get_discount_remaining()
-			if shop_discount_max > 0 and press_remaining <= 0:
-				_call_set_info("Shop discounts are maxed out.")
-				purchase_failed.emit("discount_max")
-				return
-			if _call_can_afford(shop_discount_price):
-				_call_spend_gold(shop_discount_price)
-				shop_discount_purchases += 1
-				_call_apply_shop_discount(shop_discount_percent)
-				_call_set_info("Shop prices discounted by %d%%." % int(round(shop_discount_percent)))
-				_call_update_labels()
-				purchase_completed.emit()
-			else:
-				_call_set_info("Not enough gold.")
-				purchase_failed.emit("gold")
+			discount_text = "%s (%d remaining)" % [discount_text, remaining_discounts]
+		var discount_disabled := shop_discount_max > 0 and remaining_discounts <= 0
+		_add_shop_buff_button(
+			discount_text,
+			func() -> void:
+				var press_remaining: int = _get_discount_remaining()
+				if shop_discount_max > 0 and press_remaining <= 0:
+					_call_set_info("Shop discounts are maxed out.")
+					purchase_failed.emit("discount_max")
+					return
+				_attempt_purchase(shop_discount_price, func() -> void:
+					shop_discount_purchases += 1
+					_call_apply_shop_discount(shop_discount_percent)
+					_call_set_info("Shop prices discounted by %d%%." % int(round(shop_discount_percent)))
+				)
+			,
+			discount_disabled,
+			"Shop discounts are maxed out."
 		)
-		App.apply_neutral_button_style(discount_buff)
-		App.bind_button_feedback(discount_buff)
-		shop_buffs_buttons.add_child(discount_buff)
 
 	if shop_entry_card_count > 0:
-		var entry_buff := Button.new()
 		var remaining_offers: int = max_card_offers - card_offers.size() if max_card_offers > 0 else 0
-		entry_buff.text = "Shop Scribe (+%d card on entry) (%dg)" % [shop_entry_card_count, shop_entry_card_price]
+		var entry_text := "Shop Scribe (+%d card on entry) (%dg)" % [shop_entry_card_count, shop_entry_card_price]
 		if max_card_offers > 0:
-			entry_buff.text = "%s (%d remaining)" % [entry_buff.text, max(0, remaining_offers)]
-		if max_card_offers > 0 and remaining_offers <= 0:
-			entry_buff.disabled = true
-			entry_buff.tooltip_text = "Shop is at max card offers."
-		entry_buff.pressed.connect(func() -> void:
-			if max_card_offers > 0 and card_offers.size() >= max_card_offers:
-				_call_set_info("Shop has the max card offers.")
-				purchase_failed.emit("max_cards")
-				return
-			if _call_can_afford(shop_entry_card_price):
-				_call_spend_gold(shop_entry_card_price)
-				var new_count: int = _call_apply_shop_entry_cards(shop_entry_card_count)
-				_call_update_labels()
-				purchase_completed.emit()
-			else:
-				_call_set_info("Not enough gold.")
-				purchase_failed.emit("gold")
+			entry_text = "%s (%d remaining)" % [entry_text, max(0, remaining_offers)]
+		var entry_disabled := max_card_offers > 0 and remaining_offers <= 0
+		_add_shop_buff_button(
+			entry_text,
+			func() -> void:
+				if max_card_offers > 0 and card_offers.size() >= max_card_offers:
+					_call_set_info("Shop has the max card offers.")
+					purchase_failed.emit("max_cards")
+					return
+				_attempt_purchase(shop_entry_card_price, func() -> void:
+					_call_apply_shop_entry_cards(shop_entry_card_count)
+				)
+			,
+			entry_disabled,
+			"Shop is at max card offers."
 		)
-		App.apply_neutral_button_style(entry_buff)
-		App.bind_button_feedback(entry_buff)
-		shop_buffs_buttons.add_child(entry_buff)
 
 func _build_shop_mod_buttons() -> void:
 	if shop_ball_mods_buttons == null:
@@ -410,6 +351,33 @@ func _build_shop_mod_buttons() -> void:
 		App.apply_neutral_button_style(button)
 		App.bind_button_feedback(button)
 		shop_ball_mods_buttons.add_child(button)
+
+func _attempt_purchase(price: int, on_success: Callable, fail_reason: String = "gold", fail_text: String = "Not enough gold.") -> void:
+	if _call_can_afford(price):
+		_call_spend_gold(price)
+		if on_success.is_valid():
+			on_success.call()
+		_call_update_labels()
+		purchase_completed.emit()
+	else:
+		_call_set_info(fail_text)
+		purchase_failed.emit(fail_reason)
+
+func _add_shop_buff_button(text: String, pressed_action: Callable, is_disabled: bool = false, tooltip_text: String = "") -> Button:
+	var button := Button.new()
+	button.text = text
+	if is_disabled:
+		button.disabled = true
+		if tooltip_text != "":
+			button.tooltip_text = tooltip_text
+	button.pressed.connect(func() -> void:
+		if pressed_action.is_valid():
+			pressed_action.call()
+	)
+	App.apply_neutral_button_style(button)
+	App.bind_button_feedback(button)
+	shop_buffs_buttons.add_child(button)
+	return button
 
 func _clear_shop_buttons() -> void:
 	if shop_cards_buttons == null or shop_buffs_buttons == null or shop_ball_mods_buttons == null:
