@@ -1827,26 +1827,30 @@ func _spawn_wound_flyout(start_pos: Vector2, is_blocked: bool) -> void:
 func _spawn_wound_block_shield() -> void:
 	if hud == null or deck_stack == null:
 		return
+	var deck_rect := deck_stack.get_global_rect()
+	var shield_container := Control.new()
+	shield_container.size = deck_rect.size
+	shield_container.global_position = deck_rect.position
+	shield_container.pivot_offset = deck_rect.size * 0.5
+	shield_container.scale = Vector2.ONE * 0.2
+	shield_container.modulate = Color(1.0, 1.0, 1.0, 0.9)
+	hud.add_child(shield_container)
+
 	var shield := Label.new()
 	shield.text = "🛡️"
 	shield.add_theme_font_size_override("font_size", 36)
+	shield.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	shield.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	shield.autowrap_mode = TextServer.AUTOWRAP_OFF
 	if card_emoji_font:
 		shield.add_theme_font_override("font", card_emoji_font)
-	hud.add_child(shield)
-	shield.size = shield.get_minimum_size()
-	shield.pivot_offset = shield.size * 0.5
-	var deck_rect := deck_stack.get_global_rect()
-	var center: Vector2 = deck_rect.get_center()
-	shield.global_position = center - shield.pivot_offset
-	var target_scale_x: float = deck_rect.size.x / max(1.0, shield.size.x)
-	var target_scale_y: float = deck_rect.size.y / max(1.0, shield.size.y)
-	var target_scale: float = max(target_scale_x, target_scale_y) * 1.35
-	shield.scale = Vector2.ONE * 0.2
-	shield.modulate = Color(1.0, 1.0, 1.0, 0.9)
+	shield.set_anchors_preset(Control.PRESET_FULL_RECT)
+	shield.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	shield_container.add_child(shield)
 	var tween := get_tree().create_tween()
-	tween.tween_property(shield, "scale", Vector2.ONE * target_scale, 0.55).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	tween.parallel().tween_property(shield, "modulate:a", 0.0, 0.55).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	tween.tween_callback(shield.queue_free)
+	tween.tween_property(shield_container, "scale", Vector2.ONE * 1.4, 0.55).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.parallel().tween_property(shield_container, "modulate:a", 0.0, 0.55).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_callback(shield_container.queue_free)
 
 func _refresh_mod_buttons() -> void:
 	for child in mods_buttons.get_children():
