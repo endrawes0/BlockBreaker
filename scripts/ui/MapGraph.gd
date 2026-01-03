@@ -20,6 +20,11 @@ const TYPE_LABELS: Dictionary = {
 	"boss": "👹",
 	"victory": "V"
 }
+const BOSS_LABELS_BY_ACT: Dictionary = {
+	0: "👹",
+	1: "🦑",
+	2: "👑"
+}
 const TYPE_NAMES: Dictionary = {
 	"combat": "Combat",
 	"elite": "Elite",
@@ -41,6 +46,8 @@ var visible_edges: Array[Dictionary] = []
 var has_visibility_data: bool = false
 var visible_outgoing: Dictionary = {}
 var node_positions: Dictionary = {}
+var active_act_index: int = 0
+var act_count: int = 1
 
 func set_plan(plan: Dictionary, choices: Array[Dictionary]) -> void:
 	rooms = plan.get("rooms", [])
@@ -51,6 +58,8 @@ func set_plan(plan: Dictionary, choices: Array[Dictionary]) -> void:
 	visible_edges = plan.get("visible_edges", [])
 	has_visibility_data = bool(plan.get("has_visibility_data", false))
 	visible_outgoing = _build_outgoing_edges(visible_edges)
+	active_act_index = int(plan.get("active_act_index", 0))
+	act_count = max(1, int(plan.get("act_count", 1)))
 	choice_ids = []
 	for choice in choices:
 		choice_ids.append(String(choice.get("id", "")))
@@ -236,6 +245,8 @@ func _draw_nodes(room_index: Dictionary, positions: Dictionary) -> void:
 		if room_id in choice_ids:
 			draw_arc(pos, radius + 6.0, 0.0, TAU, 48, Color(0.95, 0.85, 0.2), 2.0)
 		var label: String = String(TYPE_LABELS.get(room_type, "?"))
+		if room_type == "boss":
+			label = _boss_label()
 		var font_size: int = 18
 		if room_type in ["elite", "rest", "shop", "boss"]:
 			font_size = int(round(float(font_size) * 1.3))
@@ -251,6 +262,9 @@ func _draw_nodes(room_index: Dictionary, positions: Dictionary) -> void:
 func _node_radius() -> float:
 	var size: Vector2 = get_size()
 	return clamp(min(size.x, size.y) * 0.045, 10.0, 18.0)
+
+func _boss_label() -> String:
+	return String(BOSS_LABELS_BY_ACT.get(active_act_index, TYPE_LABELS.get("boss", "B")))
 
 func _resolve_next_ids(room: Dictionary) -> Array[String]:
 	var resolved: Array[String] = []
