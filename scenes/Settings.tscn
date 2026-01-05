@@ -23,116 +23,116 @@ layout_mode = 2
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="Title" type="Label" parent="Center/VBox"]
+[node name="Title" type="Label" parent="Center/Card/VBox"]
 layout_mode = 2
 text = "Settings"
 horizontal_alignment = 1
 
-[node name="Tabs" type="TabContainer" parent="Center/VBox"]
+[node name="Tabs" type="TabContainer" parent="Center/Card/VBox"]
 custom_minimum_size = Vector2(420, 360)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 current_tab = 0
 
-[node name="Visual" type="VBoxContainer" parent="Center/VBox/Tabs"]
+[node name="Visual" type="VBoxContainer" parent="Center/Card/VBox/Tabs"]
 layout_mode = 2
 theme_override_constants/separation = 10
 metadata/_tab_index = 0
 
-[node name="WindowModeLabel" type="Label" parent="Center/VBox/Tabs/Visual"]
+[node name="WindowModeLabel" type="Label" parent="Center/Card/VBox/Tabs/Visual"]
 layout_mode = 2
 text = "Window Mode"
 horizontal_alignment = 1
 
-[node name="WindowMode" type="OptionButton" parent="Center/VBox/Tabs/Visual"]
+[node name="WindowMode" type="OptionButton" parent="Center/Card/VBox/Tabs/Visual"]
 layout_mode = 2
 
-[node name="ResolutionLabel" type="Label" parent="Center/VBox/Tabs/Visual"]
+[node name="ResolutionLabel" type="Label" parent="Center/Card/VBox/Tabs/Visual"]
 layout_mode = 2
 text = "Resolution"
 horizontal_alignment = 1
 
-[node name="Resolution" type="OptionButton" parent="Center/VBox/Tabs/Visual"]
+[node name="Resolution" type="OptionButton" parent="Center/Card/VBox/Tabs/Visual"]
 layout_mode = 2
 
-[node name="VfxToggle" type="CheckBox" parent="Center/VBox/Tabs/Visual"]
+[node name="VfxToggle" type="CheckBox" parent="Center/Card/VBox/Tabs/Visual"]
 layout_mode = 2
 text = "Enable particles"
 
-[node name="VfxIntensityLabel" type="Label" parent="Center/VBox/Tabs/Visual"]
+[node name="VfxIntensityLabel" type="Label" parent="Center/Card/VBox/Tabs/Visual"]
 layout_mode = 2
 text = "FX Density"
 horizontal_alignment = 1
 
-[node name="VfxIntensity" type="HSlider" parent="Center/VBox/Tabs/Visual"]
+[node name="VfxIntensity" type="HSlider" parent="Center/Card/VBox/Tabs/Visual"]
 layout_mode = 2
 step = 5.0
 value = 100.0
 
-[node name="Audio" type="VBoxContainer" parent="Center/VBox/Tabs"]
+[node name="Audio" type="VBoxContainer" parent="Center/Card/VBox/Tabs"]
 visible = false
 layout_mode = 2
 theme_override_constants/separation = 10
 metadata/_tab_index = 1
 
-[node name="MasterLabel" type="Label" parent="Center/VBox/Tabs/Audio"]
+[node name="MasterLabel" type="Label" parent="Center/Card/VBox/Tabs/Audio"]
 layout_mode = 2
 text = "Master"
 horizontal_alignment = 1
 
-[node name="MasterSlider" type="HSlider" parent="Center/VBox/Tabs/Audio"]
+[node name="MasterSlider" type="HSlider" parent="Center/Card/VBox/Tabs/Audio"]
 layout_mode = 2
 value = 100.0
 
-[node name="MusicLabel" type="Label" parent="Center/VBox/Tabs/Audio"]
+[node name="MusicLabel" type="Label" parent="Center/Card/VBox/Tabs/Audio"]
 layout_mode = 2
 text = "Music"
 horizontal_alignment = 1
 
-[node name="MusicSlider" type="HSlider" parent="Center/VBox/Tabs/Audio"]
+[node name="MusicSlider" type="HSlider" parent="Center/Card/VBox/Tabs/Audio"]
 layout_mode = 2
 value = 100.0
 
-[node name="SfxLabel" type="Label" parent="Center/VBox/Tabs/Audio"]
+[node name="SfxLabel" type="Label" parent="Center/Card/VBox/Tabs/Audio"]
 layout_mode = 2
 text = "SFX"
 horizontal_alignment = 1
 
-[node name="SfxSlider" type="HSlider" parent="Center/VBox/Tabs/Audio"]
+[node name="SfxSlider" type="HSlider" parent="Center/Card/VBox/Tabs/Audio"]
 layout_mode = 2
 value = 100.0
 
-[node name="Gameplay" type="VBoxContainer" parent="Center/VBox/Tabs"]
+[node name="Gameplay" type="VBoxContainer" parent="Center/Card/VBox/Tabs"]
 visible = false
 layout_mode = 2
 theme_override_constants/separation = 10
 metadata/_tab_index = 2
 
-[node name="BallSpeedLabel" type="Label" parent="Center/VBox/Tabs/Gameplay"]
+[node name="BallSpeedLabel" type="Label" parent="Center/Card/VBox/Tabs/Gameplay"]
 layout_mode = 2
 text = "Ball Speed"
 horizontal_alignment = 1
 
-[node name="BallSpeedSlider" type="HSlider" parent="Center/VBox/Tabs/Gameplay"]
+[node name="BallSpeedSlider" type="HSlider" parent="Center/Card/VBox/Tabs/Gameplay"]
 layout_mode = 2
 min_value = 50.0
 max_value = 150.0
 step = 5.0
 value = 100.0
 
-[node name="PaddleSpeedLabel" type="Label" parent="Center/VBox/Tabs/Gameplay"]
+[node name="PaddleSpeedLabel" type="Label" parent="Center/Card/VBox/Tabs/Gameplay"]
 layout_mode = 2
 text = "Paddle Speed"
 horizontal_alignment = 1
 
-[node name="PaddleSpeedSlider" type="HSlider" parent="Center/VBox/Tabs/Gameplay"]
+[node name="PaddleSpeedSlider" type="HSlider" parent="Center/Card/VBox/Tabs/Gameplay"]
 layout_mode = 2
 min_value = 50.0
 max_value = 150.0
 step = 5.0
 value = 100.0
 
-[node name="BackButton" type="Button" parent="Center/VBox"]
+[node name="BackButton" type="Button" parent="Center/Card/VBox"]
 layout_mode = 2
 text = "Back"
