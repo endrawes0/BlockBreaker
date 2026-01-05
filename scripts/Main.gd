@@ -1773,7 +1773,7 @@ func on_menu_opened() -> void:
 			node.visible = false
 
 func on_menu_closed() -> void:
-	_transition_event("continue_run", {"resume": true})
+	_transition_event("continue_run")
 	for node in [paddle, bricks_root, playfield, hud]:
 		if node:
 			node.visible = true

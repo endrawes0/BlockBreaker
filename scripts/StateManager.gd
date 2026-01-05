@@ -115,7 +115,9 @@ func transition_event(event: String, context: Dictionary = {}) -> bool:
 	if event == "continue_run":
 		if _state != GameState.MAIN_MENU:
 			return false
-		return transition_to(_last_run_state, context)
+		var resume_context: Dictionary = context.duplicate()
+		resume_context["resume"] = true
+		return transition_to(_last_run_state, resume_context)
 	var transitions: Dictionary = ALLOWED_TRANSITIONS.get(_state, {})
 	if transitions.is_empty():
 		return false
