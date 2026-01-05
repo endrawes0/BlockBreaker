@@ -7,4 +7,4 @@ func _ready() -> void:
 	App.bind_button_feedback(self)
 
 func _back_to_menu() -> void:
-	App.show_menu()
+	App.close_help()
