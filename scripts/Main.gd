@@ -935,7 +935,7 @@ func _enter_room(room_type: String) -> void:
 		"shop":
 			_transition_event("enter_room_shop")
 		"victory":
-			push_warning("Victory rooms do not transition directly from the map.")
+			assert(false, "Victory rooms should not be reachable from the map.")
 		"elite":
 			floor_index += 1
 			_transition_event("enter_room_elite")
