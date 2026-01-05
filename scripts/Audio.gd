@@ -4,9 +4,11 @@ const MUSIC_CONFIG_RESOURCE_PATH: String = "res://data/music.tres"
 const MENU_THEME_STREAM_PATH: String = "res://assets/music/MainMenuTheme.ogg"
 const COMBAT_THEME_STREAM_PATH: String = "res://assets/music/CombatTheme.ogg"
 const SHOP_THEME_STREAM_PATH: String = "res://assets/music/ShopTheme.ogg"
+const REST_THEME_STREAM_PATH: String = "res://assets/music/RestTheme.ogg"
 const MUSIC_MENU: String = "menu"
 const MUSIC_COMBAT: String = "combat"
 const MUSIC_SHOP: String = "shop"
+const MUSIC_REST: String = "rest"
 const BOUNCE_BASE_FREQ: float = 200.0
 const BOUNCE_FREQ_VARIANCE: float = 20.0
 const BOSS_DROP_FREQ_START: float = 60.0
@@ -53,6 +55,12 @@ func start_shop_music() -> void:
 
 func stop_shop_music() -> void:
 	_stop_music_with_config(MUSIC_SHOP)
+
+func start_rest_music() -> void:
+	_start_music_with_config(MUSIC_REST)
+
+func stop_rest_music() -> void:
+	_stop_music_with_config(MUSIC_REST)
 
 func start_menu_music() -> void:
 	_start_music_with_config(MUSIC_MENU)
@@ -104,6 +112,7 @@ func _build_default_music_config() -> MusicConfig:
 	config.menu = _build_track_config(MENU_THEME_STREAM_PATH, 1.6, 1.2)
 	config.combat = _build_track_config(COMBAT_THEME_STREAM_PATH, 1.0, 2.0)
 	config.shop = _build_track_config(SHOP_THEME_STREAM_PATH, 1.0, 2.0)
+	config.rest = _build_track_config(REST_THEME_STREAM_PATH, 1.0, 4.0)
 	return config
 
 func _build_track_config(path: String, fade_in: float, fade_out: float) -> MusicTrackConfig:
@@ -137,6 +146,8 @@ func _get_music_track(key: String) -> MusicTrackConfig:
 			return _music_config.combat
 		MUSIC_SHOP:
 			return _music_config.shop
+		MUSIC_REST:
+			return _music_config.rest
 	return null
 
 func _start_music(key: String, track: MusicTrackConfig) -> void:
