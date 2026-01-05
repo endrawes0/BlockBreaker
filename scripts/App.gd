@@ -123,17 +123,30 @@ func show_help() -> void:
 
 func show_settings() -> void:
 	_ensure_settings()
-	_switch_to_scene(settings_instance)
+	if run_instance and is_instance_valid(run_instance):
+		_show_menu_overlay()
+	else:
+		_ensure_menu()
+		_set_scene_active(menu_instance, true)
+	_show_settings_overlay()
 
 func close_settings() -> void:
 	if settings_instance and is_instance_valid(settings_instance):
 		_set_scene_active(settings_instance, false)
 	if run_instance and is_instance_valid(run_instance):
 		_show_menu_overlay()
-		get_tree().current_scene = run_instance
 		return
 	_ensure_menu()
-	_switch_to_scene(menu_instance)
+	_set_scene_active(menu_instance, true)
+
+func _show_settings_overlay() -> void:
+	if settings_instance == null or not is_instance_valid(settings_instance):
+		return
+	settings_instance.visible = true
+	settings_instance.process_mode = Node.PROCESS_MODE_INHERIT
+	if get_tree() and get_tree().root:
+		var root := get_tree().root
+		root.move_child(settings_instance, root.get_child_count() - 1)
 
 func show_test_lab() -> void:
 	_menu_music_restart_after_run = false
