@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://dlhrnj47gqdfr" path="res://scripts/Settings.gd" id="1"]
 
-[node name="Settings" type="PanelContainer"]
+[node name="Settings" type="Control"]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -16,7 +16,10 @@ layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
 
-[node name="VBox" type="VBoxContainer" parent="Center"]
+[node name="Card" type="PanelContainer" parent="Center"]
+layout_mode = 2
+
+[node name="VBox" type="VBoxContainer" parent="Center/Card"]
 layout_mode = 2
 theme_override_constants/separation = 12
 
