@@ -129,7 +129,7 @@ func _load_audio_stream(path: String) -> AudioStream:
 	return loaded as AudioStream
 
 func _start_music_with_config(key: String) -> void:
-	_stop_other_music(key)
+	await _stop_other_music(key)
 	var track := _get_music_track(key)
 	_start_music(key, track)
 
@@ -141,11 +141,15 @@ func _all_music_keys() -> Array[String]:
 	return [MUSIC_MENU, MUSIC_COMBAT, MUSIC_SHOP, MUSIC_REST]
 
 func _stop_other_music(active_key: String) -> void:
+	var tweens: Array[Tween] = []
 	for key in _all_music_keys():
 		if key == active_key:
 			continue
 		var track := _get_music_track(key)
-		_stop_music(key, track)
+		tweens.append(_stop_music(key, track))
+	for tween in tweens:
+		if tween.is_running():
+			await tween.finished
 
 func _get_music_track(key: String) -> MusicTrackConfig:
 	if _music_config == null:
@@ -169,12 +173,12 @@ func _start_music(key: String, track: MusicTrackConfig) -> void:
 	_ensure_music_player(key, track.stream)
 	_fade_in_music(key, fade_in)
 
-func _stop_music(key: String, track: MusicTrackConfig) -> void:
+func _stop_music(key: String, track: MusicTrackConfig) -> Tween:
 	_music_should_play[key] = false
 	if track == null:
-		return
+		return _create_instant_tween()
 	var fade_out: float = max(0.0, track.fade_out)
-	_fade_out_music(key, fade_out)
+	return _fade_out_music(key, fade_out)
 
 func _ensure_music_player(key: String, stream: AudioStream) -> AudioStreamPlayer:
 	var player := _get_music_player(key)
@@ -230,13 +234,13 @@ func _fade_in_music(key: String, duration: float) -> void:
 	tween.tween_property(player, "volume_db", 0.0, duration).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	_music_tweens[key] = tween
 
-func _fade_out_music(key: String, duration: float) -> void:
+func _fade_out_music(key: String, duration: float) -> Tween:
 	var player := _get_music_player(key)
 	if player == null:
-		return
+		return _create_instant_tween()
 	if not player.playing:
 		player.stop()
-		return
+		return _create_instant_tween()
 	_kill_music_tween(key)
 	var tween := create_tween()
 	tween.tween_property(player, "volume_db", -80.0, duration).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
@@ -246,12 +250,18 @@ func _fade_out_music(key: String, duration: float) -> void:
 			player.volume_db = 0.0
 	)
 	_music_tweens[key] = tween
+	return tween
 
 func _kill_music_tween(key: String) -> void:
 	var tween: Tween = _music_tweens.get(key)
 	if tween and tween.is_running():
 		tween.kill()
 	_music_tweens.erase(key)
+
+func _create_instant_tween() -> Tween:
+	var tween := create_tween()
+	tween.tween_interval(0.0)
+	return tween
 
 func _apply_audio_settings() -> void:
 	_apply_bus_volume("Master", _settings_audio_master)
