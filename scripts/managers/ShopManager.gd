@@ -1,6 +1,9 @@
 extends Node
 class_name ShopManager
 
+func _log_shop_manager(tag: String, payload: String) -> void:
+	print("[SHOP-MGR] %s: %s" % [tag, payload])
+
 signal purchase_completed
 signal purchase_failed(reason: String)
 
@@ -51,6 +54,7 @@ func setup(hud: HudController, cards_container: Container, buffs_container: Cont
 	shop_ball_mods_buttons = mods_container
 
 func configure(config: Dictionary) -> void:
+	_log_shop_manager("configure", "%s" % config)
 	card_data = config.get("card_data", {})
 	card_price = int(config.get("card_price", 0))
 	max_card_offers = int(config.get("max_card_offers", 0))
@@ -80,6 +84,7 @@ func configure(config: Dictionary) -> void:
 	ball_mod_order = config.get("ball_mod_order", [])
 	ball_mod_counts = config.get("ball_mod_counts", {})
 	ball_mod_colors = config.get("ball_mod_colors", {})
+	_log_shop_manager("configure_state", "ball_mod_data=%s order=%s counts=%s" % [ball_mod_data, ball_mod_order, ball_mod_counts])
 
 func set_callbacks(callbacks_map: Dictionary) -> void:
 	callbacks = callbacks_map
@@ -121,6 +126,7 @@ func _get_discount_remaining() -> int:
 func build_shop_buttons() -> void:
 	if shop_cards_buttons == null or shop_buffs_buttons == null or shop_ball_mods_buttons == null:
 		return
+	_log_shop_manager("build_shop_buttons", "offers=%s balls=%s" % [card_offers, ball_mod_order])
 	_clear_shop_buttons()
 	build_shop_card_buttons()
 	_build_shop_buff_buttons()
@@ -130,8 +136,10 @@ func build_shop_card_buttons() -> void:
 	_clear_shop_card_buttons()
 	if shop_cards_buttons == null or hud_controller == null:
 		return
+	_log_shop_manager("build_card_buttons", "offers=%s price=%d reroll_price=%d" % [card_offers, card_price, get_reroll_price()])
 	var reroll_price: int = get_reroll_price()
 	for card_id in card_offers:
+		_log_shop_manager("card_offer", "id=%s price=%d desc=%s" % [card_id, card_price, card_data.get(card_id, {})])
 		var shop_card_id := card_id
 		var button := hud_controller.create_card_button(card_id)
 		var card_button := button
@@ -178,6 +186,7 @@ func build_shop_card_buttons() -> void:
 func _build_shop_buff_buttons() -> void:
 	if shop_buffs_buttons == null:
 		return
+	_log_shop_manager("build_buff_buttons", "prices upgrade=%d vitality=%d energy=%d paddle_width=%d paddle_speed=%d reserve=%d discount=%d entry=%d" % [upgrade_price, vitality_price, energy_buff_price, paddle_width_price, paddle_speed_price, reserve_ball_price, shop_discount_price, shop_entry_card_price])
 	var upgrade_text := "Upgrade starting hand (+%d) (%dg)" % [upgrade_hand_bonus, upgrade_price]
 	if max_hand_size > 0:
 		var hand_remaining: int = _get_hand_remaining()
@@ -255,9 +264,11 @@ func _build_shop_buff_buttons() -> void:
 func _build_shop_mod_buttons() -> void:
 	if shop_ball_mods_buttons == null:
 		return
+	_log_shop_manager("build_mod_buttons", "order=%s ball_mods=%s counts=%s" % [ball_mod_order, ball_mod_data, ball_mod_counts])
 	for mod_id in ball_mod_order:
 		var count: int = int(ball_mod_counts.get(mod_id, 0))
 		var mod: Dictionary = ball_mod_data[mod_id]
+		_log_shop_manager("mod_button_data", "id=%s cost=%s count=%d" % [mod_id, mod.get("cost", 0), count])
 		var shop_mod_id := mod_id
 		var shop_mod := mod
 		var button := Button.new()
@@ -379,7 +390,9 @@ func _handle_shop_scribe() -> void:
 	)
 
 func _attempt_purchase(price: int, on_success: Callable, fail_reason: String = "gold", fail_text: String = "Not enough gold.") -> void:
-	if _call_can_afford(price):
+	var affordable: bool = _call_can_afford(price)
+	_log_shop_manager("attempt_purchase", "price=%d affordable=%s reason=%s" % [price, affordable, fail_reason])
+	if affordable:
 		_call_spend_gold(price)
 		if on_success.is_valid():
 			on_success.call()

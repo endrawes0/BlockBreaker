@@ -413,6 +413,9 @@ func _get_encounter_gold_reward() -> int:
 		return active_act_config.elite_gold_reward
 	return active_act_config.combat_gold_reward
 
+func _log_shop_trace(tag: String, payload: String) -> void:
+	print("[SHOP] %s: %s" % [tag, payload])
+
 func _apply_balance_data(data: Resource) -> void:
 	if data.card_config != null:
 		card_data = data.card_config.card_data
@@ -432,6 +435,7 @@ func _apply_balance_data(data: Resource) -> void:
 			ball_mod_colors[mod_id] = mod["color"]
 	reward_card_count = data.reward_card_count
 	var shop: Dictionary = data.shop_data
+	_log_shop_trace("balance_shop_data", "loaded %s" % shop)
 	shop_card_price = int(shop.get("card_price", 0))
 	shop_max_cards = int(shop.get("max_cards", 0))
 	shop_max_hand_size = int(shop.get("max_hand_size", 0))
@@ -1384,7 +1388,7 @@ func _get_discounted_shop_price(price: int) -> int:
 func _configure_shop_manager() -> void:
 	if shop_manager == null:
 		return
-	shop_manager.configure({
+	var shop_config: Dictionary = {
 		"card_data": card_data,
 		"card_price": _get_discounted_shop_price(shop_card_price),
 		"max_card_offers": shop_max_cards,
@@ -1414,7 +1418,10 @@ func _configure_shop_manager() -> void:
 		"ball_mod_order": ball_mod_order,
 		"ball_mod_counts": ball_mod_counts,
 		"ball_mod_colors": ball_mod_colors
-	})
+	}
+	_log_shop_trace("configure_shop_manager", "%s" % shop_config)
+	shop_manager.configure(shop_config)
+	_log_shop_trace("ball_mod_state", "data=%s order=%s counts=%s" % [ball_mod_data, ball_mod_order, ball_mod_counts])
 	shop_manager.set_callbacks(_shop_callbacks())
 
 func _can_afford(price: int) -> bool:
