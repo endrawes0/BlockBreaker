@@ -416,18 +416,28 @@ func _get_encounter_gold_reward() -> int:
 func _log_shop_trace(tag: String, payload: String) -> void:
 	print("[SHOP] %s: %s" % [tag, payload])
 
+func _to_string_array(source) -> Array[String]:
+	var result: Array[String] = []
+	if source == null:
+		return result
+	if typeof(source) != TYPE_ARRAY:
+		return result
+	for element in source:
+		result.append(String(element))
+	return result
+
 func _apply_balance_data(data: Resource) -> void:
 	if data.card_config != null:
 		card_data = data.card_config.card_data
-		card_pool = data.card_config.card_pool
-		starting_deck = data.card_config.starting_deck
+		card_pool = _to_string_array(data.card_config.card_pool)
+		starting_deck = _to_string_array(data.card_config.starting_deck)
 	else:
 		card_data = data.card_data
-		card_pool = data.card_pool
-		starting_deck = data.starting_deck
+		card_pool = _to_string_array(data.card_pool)
+		starting_deck = _to_string_array(data.starting_deck)
 	var mods: Dictionary = data.ball_mods
 	ball_mod_data = mods.get("data", {})
-	ball_mod_order = mods.get("order", [])
+	ball_mod_order = _to_string_array(mods.get("order", []))
 	ball_mod_colors = {}
 	for mod_id in ball_mod_data.keys():
 		var mod: Dictionary = ball_mod_data[mod_id]
