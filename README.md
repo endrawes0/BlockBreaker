@@ -1,15 +1,35 @@
-![ShatterShot Logo](https://github.com/endrawes0/BlockBreaker/blob/main/assets/ShatterShot-Logo.png?raw=true)
+![ShatterShot Logo](assets/ShatterShot-Logo.png)
 
 # ShatterShot Roguelike Deck Builder
 
 ## Overview
 A single-player Godot project that fuses Breakout-style paddle/ball action with a roguelike deck-builder loop. Each room is a short combat encounter where you plan a volley by playing cards, then launch balls to clear a brick formation before threat damage wears you down.
 
+## Quick Start
+Prereqs: Godot `4.5.1` (the project targets Godot `4.5`).
+
+- Open the project by importing `project.godot` in the Godot editor.
+- Linux/macOS convenience script: run `./start.sh` (expects a Godot binary at `../Godot_v4.5.1`).
+
+### Controls (Defaults)
+- Move paddle: `A/D` or `Left/Right`.
+- Launch volley / reserve ball: `Space` (Godot `ui_accept`).
+- End turn: Godot `ui_select`.
+- Map preview: `M`.
+- Back/menu: `Esc` (Godot `ui_cancel`).
+- UI: mouse for cards, buttons, and tooltips.
+
+## Development Docs
+- Development notes: `DEVELOPMENT.md`
+- Exporting and releases: `EXPORTING.md`
+- Contributing: `CONTRIBUTING.md`
+
 ## Architecture
 - Godot scenes:
   - `scenes/Main.tscn`: core gameplay scene with Paddle, Bricks container, Walls, and HUD panels.
   - `scenes/Paddle.tscn`, `scenes/Ball.tscn`, `scenes/Brick.tscn`: reusable gameplay actors.
   - `scenes/MainMenu.tscn`, `scenes/Help.tscn`, `scenes/Shop.tscn`: front-end flow and shop layout.
+  - `scenes/Settings.tscn`: settings menu (resolution/window mode and gameplay/VFX modifiers).
 - Core scripts:
   - `scripts/Main.gd`: main game controller. Owns the run state machine, deck/hand/discard, encounter setup, UI updates, and room flow (map, rewards, shop, rest, boss).
   - `scripts/Ball.gd`: ball physics, launch/bounce behavior, piercing logic, and loss handling.
@@ -74,3 +94,6 @@ A single-player Godot project that fuses Breakout-style paddle/ball action with 
 
 ## More Detail
 See `PROJECT_DESCRIPTION.md` for the same information in a standalone description file.
+
+## License
+MIT. See `LICENSE`.

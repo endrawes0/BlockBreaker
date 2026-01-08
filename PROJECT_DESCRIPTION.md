@@ -7,7 +7,8 @@ A single-player Godot project that fuses Breakout-style paddle/ball action with 
 - Godot scenes:
   - `scenes/Main.tscn`: core gameplay scene with Paddle, Bricks container, Walls, and HUD panels.
   - `scenes/Paddle.tscn`, `scenes/Ball.tscn`, `scenes/Brick.tscn`: reusable gameplay actors.
-  - `scenes/MainMenu.tscn` and `scenes/Help.tscn`: front-end flow.
+  - `scenes/MainMenu.tscn`, `scenes/Help.tscn`, `scenes/Shop.tscn`: front-end flow and shop layout.
+  - `scenes/Settings.tscn`: settings menu (resolution/window mode and gameplay/VFX modifiers).
 - Core scripts:
   - `scripts/Main.gd`: main game controller. Owns the run state machine, deck/hand/discard, encounter setup, UI updates, and room flow (map, rewards, shop, rest, boss).
   - `scripts/Ball.gd`: ball physics, launch/bounce behavior, piercing logic, and loss handling.
@@ -34,7 +35,7 @@ A single-player Godot project that fuses Breakout-style paddle/ball action with 
 - Brick variants:
   - Shielded sides that negate hits from specific directions.
   - Regen-on-drop to grow HP after a ball is lost.
-  - Cursed bricks that add an unplayable Wound card to your discard.
+  - Cursed bricks that add an unplayable Wound card to your deck (discard pile).
 
 ## Deck and Cards
 - Start with a small deck of offensive, defensive, and utility cards.
@@ -51,3 +52,9 @@ A single-player Godot project that fuses Breakout-style paddle/ball action with 
 - Shops sell cards or let you pay to remove a card.
 - Rest rooms heal a flat amount.
 - Victory is earned by clearing the final boss room.
+
+## Controls (Defaults)
+- Move paddle: `A/D` or `Left/Right`.
+- Launch volley / reserve ball: `Space` (Godot `ui_accept`).
+- Map preview: `M`.
+- Back/menu: `Esc` (Godot `ui_cancel`).
