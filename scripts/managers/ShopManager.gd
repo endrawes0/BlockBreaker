@@ -44,6 +44,16 @@ var callbacks: Dictionary = {}
 var card_offers: Array[String] = []
 var reroll_count: int = 0
 
+func _to_string_array(source) -> Array[String]:
+	var result: Array[String] = []
+	if source == null:
+		return result
+	if typeof(source) != TYPE_ARRAY:
+		return result
+	for element in source:
+		result.append(String(element))
+	return result
+
 func setup(hud: HudController, cards_container: Container, buffs_container: Container, mods_container: Container) -> void:
 	hud_controller = hud
 	shop_cards_buttons = cards_container
@@ -77,7 +87,7 @@ func configure(config: Dictionary) -> void:
 	reroll_base_price = int(config.get("reroll_base_price", 0))
 	reroll_multiplier = float(config.get("reroll_multiplier", 1.0))
 	ball_mod_data = config.get("ball_mod_data", {})
-	ball_mod_order = config.get("ball_mod_order", [])
+	ball_mod_order = _to_string_array(config.get("ball_mod_order", []))
 	ball_mod_counts = config.get("ball_mod_counts", {})
 	ball_mod_colors = config.get("ball_mod_colors", {})
 
@@ -379,7 +389,8 @@ func _handle_shop_scribe() -> void:
 	)
 
 func _attempt_purchase(price: int, on_success: Callable, fail_reason: String = "gold", fail_text: String = "Not enough gold.") -> void:
-	if _call_can_afford(price):
+	var affordable: bool = _call_can_afford(price)
+	if affordable:
 		_call_spend_gold(price)
 		if on_success.is_valid():
 			on_success.call()

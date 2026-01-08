@@ -1,5 +1,4 @@
 extends CardEffect
-class_name HasteCardEffect
 
 const BUFF_TURNS: int = 2
 

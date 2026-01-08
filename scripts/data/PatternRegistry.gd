@@ -22,7 +22,7 @@ func _register_default_patterns() -> void:
 		return not (row % 2 == 1 and col % 2 == 0)
 	)
 	register_pattern("pyramid", func(row: int, col: int, _rows: int, cols: int) -> bool:
-		var center: int = int(cols / 2)
+		var center: int = int(cols / 2.0)
 		var spread: int = min(center, row + 1)
 		return abs(col - center) <= spread
 	)
@@ -33,7 +33,7 @@ func _register_default_patterns() -> void:
 		return row == 0 or row == rows - 1 or col == 0 or col == cols - 1
 	)
 	register_pattern("split_lanes", func(_row: int, col: int, _rows: int, cols: int) -> bool:
-		var center: int = int(cols / 2)
+		var center: int = int(cols / 2.0)
 		return col == center - 2 or col == center + 2
 	)
 	register_pattern("core", func(row: int, col: int, rows: int, cols: int) -> bool:
@@ -46,7 +46,7 @@ func _register_default_patterns() -> void:
 		return col == edge_offset or col == cols - 1 - edge_offset
 	)
 	register_pattern("hollow_diamond", func(row: int, col: int, _rows: int, cols: int) -> bool:
-		var center: int = int(cols / 2)
+		var center: int = int(cols / 2.0)
 		return abs(col - center) == row
 	)
 	register_pattern("checker_gate", func(row: int, col: int, _rows: int, _cols: int) -> bool:
@@ -55,8 +55,8 @@ func _register_default_patterns() -> void:
 		return col % 3 == 1
 	)
 	register_pattern("elite_ring_pylons", func(row: int, col: int, rows: int, cols: int) -> bool:
-		var center_row: int = int(rows / 2)
-		var center_col: int = int(cols / 2)
+		var center_row: int = int(rows / 2.0)
+		var center_col: int = int(cols / 2.0)
 		if row == 0 or row == rows - 1 or col == 0 or col == cols - 1:
 			return true
 		if (row == 1 or row == rows - 2) and (col == center_col - 1 or col == center_col + 1):
@@ -67,7 +67,7 @@ func _register_default_patterns() -> void:
 		return (col >= 1 and col <= 3) or (col >= cols - 4 and col <= cols - 2)
 	)
 	register_pattern("elite_pinwheel", func(row: int, col: int, rows: int, cols: int) -> bool:
-		var center_col: int = int(cols / 2)
+		var center_col: int = int(cols / 2.0)
 		if row == 0 or row == rows - 1:
 			return col == center_col
 		if row == 1 or row == rows - 2:
@@ -80,7 +80,7 @@ func _register_default_patterns() -> void:
 		return col == 1 or col == cols - 2
 	)
 	register_pattern("boss_act1", func(row: int, col: int, rows: int, cols: int) -> bool:
-		var center: int = int(cols / 2)
+		var center: int = int(cols / 2.0)
 		if row == 0 or row == rows - 1:
 			return true
 		if row == 1 or row == 2:
@@ -97,7 +97,7 @@ func _register_default_patterns() -> void:
 		return col == 0 or col == 3 or col == cols - 4 or col == cols - 1
 	)
 	register_pattern("boss_act3", func(row: int, col: int, rows: int, cols: int) -> bool:
-		var center: int = int(cols / 2)
+		var center: int = int(cols / 2.0)
 		if row == 0 or row == rows - 1:
 			return true
 		if row == 1 or row == rows - 2:

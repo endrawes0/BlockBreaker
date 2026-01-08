@@ -296,7 +296,7 @@ func _apply_cell_variants(row: int, col: int, config: EncounterConfig, base_vari
 func _boss_cluster_id_for_cell(pattern_id: String, _row: int, col: int, cols: int) -> int:
 	match pattern_id:
 		"boss_act1", "boss_act2":
-			return 0 if col <= int(cols / 2) - 1 else 1
+			return 0 if col <= int(cols / 2.0) - 1 else 1
 		"boss_act3":
 			return 0
 	return -1

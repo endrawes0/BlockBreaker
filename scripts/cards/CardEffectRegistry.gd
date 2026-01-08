@@ -1,5 +1,4 @@
 extends RefCounted
-class_name CardEffectRegistry
 
 const CardEffect = preload("res://scripts/cards/CardEffect.gd")
 const WhatDoesntKillUsCardEffect = preload("res://scripts/cards/WhatDoesntKillUsCardEffect.gd")

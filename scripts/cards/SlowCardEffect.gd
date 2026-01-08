@@ -1,5 +1,4 @@
 extends CardEffect
-class_name SlowCardEffect
 
 const SPEED_MULTIPLIER: float = 0.7
 

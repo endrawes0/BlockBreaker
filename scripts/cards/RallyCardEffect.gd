@@ -1,5 +1,4 @@
 extends CardEffect
-class_name RallyCardEffect
 
 const DRAW_COUNT: int = 2
 

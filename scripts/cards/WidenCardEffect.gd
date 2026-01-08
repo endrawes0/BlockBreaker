@@ -1,5 +1,4 @@
 extends CardEffect
-class_name WidenCardEffect
 
 const WIDTH_BONUS: float = 30.0
 const BUFF_TURNS: int = 2

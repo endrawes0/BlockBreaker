@@ -382,10 +382,10 @@ func _scaled_variant_policy(policy: VariantPolicy, multiplier: float) -> Variant
 	var scaled := policy.duplicate() as VariantPolicy
 	if scaled == null:
 		return policy
-	var scale: float = max(0.0, multiplier)
-	scaled.shield_chance = clamp(policy.shield_chance * scale, 0.0, 1.0)
-	scaled.regen_chance = clamp(policy.regen_chance * scale, 0.0, 1.0)
-	scaled.curse_chance = clamp(policy.curse_chance * scale, 0.0, 1.0)
+	var scalar: float = max(0.0, multiplier)
+	scaled.shield_chance = clamp(policy.shield_chance * scalar, 0.0, 1.0)
+	scaled.regen_chance = clamp(policy.regen_chance * scalar, 0.0, 1.0)
+	scaled.curse_chance = clamp(policy.curse_chance * scalar, 0.0, 1.0)
 	return scaled
 
 func _apply_act_config_to_encounter(config: EncounterConfig, is_elite: bool, is_boss: bool, act_config: Resource) -> void:
@@ -413,18 +413,28 @@ func _get_encounter_gold_reward() -> int:
 		return active_act_config.elite_gold_reward
 	return active_act_config.combat_gold_reward
 
+func _to_string_array(source) -> Array[String]:
+	var result: Array[String] = []
+	if source == null:
+		return result
+	if typeof(source) != TYPE_ARRAY:
+		return result
+	for element in source:
+		result.append(String(element))
+	return result
+
 func _apply_balance_data(data: Resource) -> void:
 	if data.card_config != null:
 		card_data = data.card_config.card_data
-		card_pool = data.card_config.card_pool
-		starting_deck = data.card_config.starting_deck
+		card_pool = _to_string_array(data.card_config.card_pool)
+		starting_deck = _to_string_array(data.card_config.starting_deck)
 	else:
 		card_data = data.card_data
-		card_pool = data.card_pool
-		starting_deck = data.starting_deck
+		card_pool = _to_string_array(data.card_pool)
+		starting_deck = _to_string_array(data.starting_deck)
 	var mods: Dictionary = data.ball_mods
 	ball_mod_data = mods.get("data", {})
-	ball_mod_order = mods.get("order", [])
+	ball_mod_order = _to_string_array(mods.get("order", []))
 	ball_mod_colors = {}
 	for mod_id in ball_mod_data.keys():
 		var mod: Dictionary = ball_mod_data[mod_id]
@@ -915,7 +925,7 @@ func _restore_panels_for_state(target_state: int) -> void:
 func _update_map_graph(choices: Array[Dictionary]) -> void:
 	if map_graph == null or not map_graph.has_method("set_plan"):
 		return
-	var plan := map_manager.get_active_plan_summary(choices)
+	var plan := map_manager.get_active_plan_summary()
 	var boss_label: String = ""
 	if act_manager != null:
 		var act_config: Resource = act_manager.get_active_act_config()
@@ -1384,7 +1394,7 @@ func _get_discounted_shop_price(price: int) -> int:
 func _configure_shop_manager() -> void:
 	if shop_manager == null:
 		return
-	shop_manager.configure({
+	var shop_config: Dictionary = {
 		"card_data": card_data,
 		"card_price": _get_discounted_shop_price(shop_card_price),
 		"max_card_offers": shop_max_cards,
@@ -1414,7 +1424,8 @@ func _configure_shop_manager() -> void:
 		"ball_mod_order": ball_mod_order,
 		"ball_mod_counts": ball_mod_counts,
 		"ball_mod_colors": ball_mod_colors
-	})
+	}
+	shop_manager.configure(shop_config)
 	shop_manager.set_callbacks(_shop_callbacks())
 
 func _can_afford(price: int) -> bool:
@@ -1695,7 +1706,9 @@ func _spawn_victory_particles() -> void:
 func _spawn_outcome_particle_cluster(color: Color, count: int, center: Vector2, radius: float, is_victory: bool) -> void:
 	if count <= 0:
 		return
-	var parent_node: Node = hud if hud != null else get_tree().root
+	var parent_node: Node = get_tree().root
+	if hud != null:
+		parent_node = hud
 	if parent_node == null:
 		return
 	for _i in range(count):
@@ -1716,11 +1729,13 @@ func _spawn_outcome_particle_cluster(color: Color, count: int, center: Vector2, 
 			)
 			particle.call("setup", color, velocity)
 
-func _spawn_outcome_particles(color: Color, is_victory: bool, index: int = 0, total: int = 1) -> void:
+func _spawn_outcome_particles(color: Color, is_victory: bool, total: int = 1) -> void:
 	var vfx_count: int = App.get_vfx_count(OUTCOME_PARTICLE_COUNT)
 	if vfx_count <= 0:
 		return
-	var parent_node: Node = hud if hud != null else get_tree().root
+	var parent_node: Node = get_tree().root
+	if hud != null:
+		parent_node = hud
 	if parent_node == null:
 		return
 	var screen: Vector2 = App.get_layout_size()

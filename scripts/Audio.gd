@@ -91,13 +91,13 @@ func _ensure_audio_buses() -> void:
 	_ensure_audio_bus("Music")
 	_ensure_audio_bus("SFX")
 
-func _ensure_audio_bus(name: String) -> void:
-	var index: int = AudioServer.get_bus_index(name)
+func _ensure_audio_bus(bus_name: String) -> void:
+	var index: int = AudioServer.get_bus_index(bus_name)
 	if index != -1:
 		return
 	AudioServer.add_bus(AudioServer.get_bus_count())
 	index = AudioServer.get_bus_count() - 1
-	AudioServer.set_bus_name(index, name)
+	AudioServer.set_bus_name(index, bus_name)
 	AudioServer.set_bus_send(index, "Master")
 
 func _load_music_config() -> void:
@@ -268,8 +268,8 @@ func _apply_audio_settings() -> void:
 	_apply_bus_volume("Music", _settings_audio_music * MUSIC_ATTENUATION)
 	_apply_bus_volume("SFX", _settings_audio_sfx)
 
-func _apply_bus_volume(name: String, value: float) -> void:
-	var index: int = AudioServer.get_bus_index(name)
+func _apply_bus_volume(bus_name: String, value: float) -> void:
+	var index: int = AudioServer.get_bus_index(bus_name)
 	if index == -1:
 		return
 	var db: float = -80.0 if value <= 0.0 else linear_to_db(value)
