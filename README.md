@@ -23,6 +23,7 @@ Prereqs: Godot `4.5.1` (the project targets Godot `4.5`).
 - Development notes: `DEVELOPMENT.md`
 - Exporting and releases: `EXPORTING.md`
 - Contributing: `CONTRIBUTING.md`
+- Gameplay reference (cards, mods, buffs): `GAMEPLAY.md`
 
 ## Architecture
 - Godot scenes:
@@ -62,29 +63,7 @@ Prereqs: Godot `4.5.1` (the project targets Godot `4.5`).
 - Start with a small deck of offensive, defensive, and utility cards.
 - Start each combat turn with 4 cards (max hand size 7) and energy to spend.
 
-### Card List
-| Card | Cost | Type | Effect |
-| --- | --- | --- | --- |
-| Strike | 1 | Offense | +1 volley damage. |
-| Twin Launch | 1 | Offense | +1 ball this volley. |
-| Guard | 1 | Defense | Gain 4 block. Block reduces threat damage this turn. |
-| Widen Paddle | 1 | Utility | Widen paddle for 2 turns. |
-| Bomb | 2 | Offense | Destroy up to 3 random bricks. |
-| Rally | 0 | Utility | Draw 2 cards. |
-| Focus | 1 | Utility | +1 energy this turn. |
-| Haste | 1 | Utility | Paddle moves faster for 2 turns. |
-| Stasis | 1 | Defense | Slow balls this volley. |
-| Wound | 9 | Curse | Unplayable. Clutters your hand until end of turn. |
-
-### Buffs (Run-Specific)
-- Upgrade starting hand: +1 to starting hand size.
-- Vitality: +10 max HP and heal 10.
-
-### Ball Mods (Run-Specific)
-- Explosives: explode bricks on hit.
-- Spikes: ignore shielded sides on hit; consumed on shielded break or ball drop.
-- Miracle: one floor bounce per use; can be reselected mid-volley.
-- Persist toggle keeps the selected mod active while charges remain.
+Full, up-to-date lists for cards, ball mods, and shop buffs live in `GAMEPLAY.md` (sourced from `data/balance/`).
 
 ## Progression
 - Rewards after combat grant new cards or allow skips.
