@@ -52,7 +52,7 @@ func _ensure_paddle_keyboard_inputs() -> void:
 	_ensure_action_key("ui_left", KEY_A)
 	_ensure_action_key("ui_right", KEY_D)
 
-func _ensure_action_key(action: String, keycode: int) -> void:
+func _ensure_action_key(action: String, keycode: Key) -> void:
 	if not InputMap.has_action(action):
 		InputMap.add_action(action)
 	if _action_has_key(action, keycode):

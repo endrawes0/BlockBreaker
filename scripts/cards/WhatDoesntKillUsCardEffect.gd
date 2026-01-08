@@ -1,5 +1,4 @@
 extends CardEffect
-class_name WhatDoesntKillUsCardEffect
 
 func apply(main: Node, instance_id: int) -> bool:
 	var wound_instance_id: int = -1

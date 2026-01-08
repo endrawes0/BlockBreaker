@@ -1,5 +1,4 @@
 extends CardEffect
-class_name RiposteCardEffect
 
 func apply(main: Node, instance_id: int) -> bool:
 	var parry_instance_id: int = -1

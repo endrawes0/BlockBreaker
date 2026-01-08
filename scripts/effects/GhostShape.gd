@@ -1,5 +1,4 @@
 extends Node2D
-class_name GhostShape
 
 const SHAPE_CIRCLE: String = "circle"
 const SHAPE_ELLIPSE: String = "ellipse"

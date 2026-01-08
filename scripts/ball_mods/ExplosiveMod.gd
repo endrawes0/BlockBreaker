@@ -1,5 +1,4 @@
 extends BallModEffect
-class_name ExplosiveMod
 
 func on_after_overkill(
 	ball: CharacterBody2D,

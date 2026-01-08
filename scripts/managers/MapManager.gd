@@ -55,7 +55,7 @@ func set_runtime_floor_plan(plan: Dictionary) -> void:
 		runtime_rooms = []
 		runtime_start_room_id = ""
 		active_act_index = 0
-	runtime_seed = int(plan.get("seed", 0))
+	runtime_seed = int(plan.get("seed_plan", 0))
 	current_room_id = ""
 	fallback_active = false
 	discovered_rooms.clear()
@@ -163,7 +163,7 @@ func room_label(room_type: String) -> String:
 		_:
 			return "???"
 
-func get_active_plan_summary(choices: Array[Dictionary] = []) -> Dictionary:
+func get_active_plan_summary() -> Dictionary:
 	var visible_graph := _build_visible_graph()
 	return {
 		"rooms": _active_rooms(),

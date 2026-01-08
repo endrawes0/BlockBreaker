@@ -382,10 +382,10 @@ func _scaled_variant_policy(policy: VariantPolicy, multiplier: float) -> Variant
 	var scaled := policy.duplicate() as VariantPolicy
 	if scaled == null:
 		return policy
-	var scale: float = max(0.0, multiplier)
-	scaled.shield_chance = clamp(policy.shield_chance * scale, 0.0, 1.0)
-	scaled.regen_chance = clamp(policy.regen_chance * scale, 0.0, 1.0)
-	scaled.curse_chance = clamp(policy.curse_chance * scale, 0.0, 1.0)
+	var scalar: float = max(0.0, multiplier)
+	scaled.shield_chance = clamp(policy.shield_chance * scalar, 0.0, 1.0)
+	scaled.regen_chance = clamp(policy.regen_chance * scalar, 0.0, 1.0)
+	scaled.curse_chance = clamp(policy.curse_chance * scalar, 0.0, 1.0)
 	return scaled
 
 func _apply_act_config_to_encounter(config: EncounterConfig, is_elite: bool, is_boss: bool, act_config: Resource) -> void:
@@ -925,7 +925,7 @@ func _restore_panels_for_state(target_state: int) -> void:
 func _update_map_graph(choices: Array[Dictionary]) -> void:
 	if map_graph == null or not map_graph.has_method("set_plan"):
 		return
-	var plan := map_manager.get_active_plan_summary(choices)
+	var plan := map_manager.get_active_plan_summary()
 	var boss_label: String = ""
 	if act_manager != null:
 		var act_config: Resource = act_manager.get_active_act_config()
@@ -1727,7 +1727,7 @@ func _spawn_outcome_particle_cluster(color: Color, count: int, center: Vector2, 
 			)
 			particle.call("setup", color, velocity)
 
-func _spawn_outcome_particles(color: Color, is_victory: bool, index: int = 0, total: int = 1) -> void:
+func _spawn_outcome_particles(color: Color, is_victory: bool, total: int = 1) -> void:
 	var vfx_count: int = App.get_vfx_count(OUTCOME_PARTICLE_COUNT)
 	if vfx_count <= 0:
 		return

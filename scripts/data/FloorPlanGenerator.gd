@@ -7,7 +7,7 @@ func generate(config: FloorPlanGeneratorConfig) -> Dictionary:
 	if config == null:
 		return {}
 	var rng := RandomNumberGenerator.new()
-	var seed_value: int = config.seed
+	var seed_value: int = config.seed_value
 	if seed_value == 0:
 		seed_value = int(Time.get_unix_time_from_system())
 	rng.seed = seed_value
@@ -52,16 +52,16 @@ func generate(config: FloorPlanGeneratorConfig) -> Dictionary:
 		room_index[start_id] = 0
 		var prev_ids: Array[String] = [start_id]
 
-		for floor in range(floors):
+		for floor_id in range(floors):
 			var weights := _sanitize_weights(Dictionary(act_settings.get("room_weights", config.room_weights)))
 			var min_choices: int = max(1, int(act_settings.get("min_choices", config.min_choices)))
 			var max_choices: int = max(min_choices, int(act_settings.get("max_choices", config.max_choices)))
 			var choice_count: int = rng.randi_range(min_choices, max_choices)
 
-			var floor_ids: Array[String] = []
+			var room_ids: Array[String] = []
 			for index in range(choice_count):
 				var room_type := _pick_weighted(weights, rng)
-				var room_id := "%s_f%d_%d" % [act_prefix, floor + 1, index + 1]
+				var room_id := "%s_f%d_%d" % [act_prefix, floor_id + 1, index + 1]
 				var resolved_type := room_type
 				var revealed_type := ""
 				if room_type == "mystery":
@@ -77,11 +77,11 @@ func generate(config: FloorPlanGeneratorConfig) -> Dictionary:
 					room["revealed_type"] = revealed_type
 				room_index[room_id] = rooms.size()
 				rooms.append(room)
-				floor_ids.append(room_id)
+				room_ids.append(room_id)
 			var prev_count: int = prev_ids.size()
 			for prev_index in range(prev_count):
-				_append_next_adjacent(rooms, room_index, prev_ids[prev_index], prev_index, floor_ids)
-			prev_ids = floor_ids
+				_append_next_adjacent(rooms, room_index, prev_ids[prev_index], prev_index, room_ids)
+			prev_ids = room_ids
 
 		var boss_id := "%s_boss" % act_prefix
 		var boss_room: Dictionary = {"id": boss_id, "type": "boss", "next": []}

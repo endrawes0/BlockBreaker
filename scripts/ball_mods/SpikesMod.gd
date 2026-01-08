@@ -1,5 +1,4 @@
 extends BallModEffect
-class_name SpikesMod
 
 func get_overkill_flag(_ball: CharacterBody2D, _collider: Object, _collision: KinematicCollision2D) -> bool:
 	return true

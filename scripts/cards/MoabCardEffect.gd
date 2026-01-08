@@ -1,5 +1,4 @@
 extends CardEffect
-class_name MoabCardEffect
 
 const BRICK_COUNT: int = 10
 

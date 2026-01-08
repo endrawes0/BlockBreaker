@@ -48,7 +48,7 @@ func set_plan(plan: Dictionary, choices: Array[Dictionary]) -> void:
 	start_room_id = String(plan.get("start_room_id", ""))
 	current_room_id = String(plan.get("current_room_id", ""))
 	fallback_active = bool(plan.get("fallback_active", false))
-	visible_room_ids = _array_to_set(plan.get("visible_room_ids", []))
+	visible_room_ids = _array_to_dict_set(plan.get("visible_room_ids", []))
 	visible_edges = plan.get("visible_edges", [])
 	has_visibility_data = bool(plan.get("has_visibility_data", false))
 	visible_outgoing = _build_outgoing_edges(visible_edges)
@@ -69,8 +69,8 @@ func _draw() -> void:
 	if start_room_id == "" or not room_index.has(start_room_id):
 		_draw_placeholder()
 		return
-	var depths := _build_depths(room_index, rooms_to_draw)
-	var positions := _layout_positions(room_index, depths, rooms_to_draw)
+	var depths := _build_depths(room_index)
+	var positions := _layout_positions(depths, rooms_to_draw)
 	node_positions = positions
 	_draw_edges(room_index, positions)
 	_draw_nodes(room_index, positions)
@@ -93,8 +93,8 @@ func _update_tooltip(mouse_pos: Vector2) -> void:
 		tooltip_text = ""
 		return
 	var room_type := _room_type_for_id(hover_room_id)
-	var name := String(TYPE_NAMES.get(room_type, "Unknown"))
-	tooltip_text = "%s" % name
+	var room_type_name := String(TYPE_NAMES.get(room_type, "Unknown"))
+	tooltip_text = "%s" % room_type_name
 
 func _room_type_for_id(room_id: String) -> String:
 	for room in rooms:
@@ -105,9 +105,9 @@ func _room_type_for_id(room_id: String) -> String:
 func _draw_placeholder() -> void:
 	var font: Font = get_theme_default_font()
 	var text: String = "Map unavailable"
-	var size: Vector2 = get_size()
+	var control_size: Vector2 = get_size()
 	var text_size: Vector2 = font.get_string_size(text)
-	var pos: Vector2 = Vector2((size.x - text_size.x) * 0.5, (size.y + text_size.y) * 0.5)
+	var pos: Vector2 = Vector2((control_size.x - text_size.x) * 0.5, (control_size.y + text_size.y) * 0.5)
 	draw_string(font, pos, text, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color(0.8, 0.8, 0.8))
 
 func _build_room_index(source_rooms: Array[Dictionary]) -> Dictionary:
@@ -118,7 +118,7 @@ func _build_room_index(source_rooms: Array[Dictionary]) -> Dictionary:
 			index[room_id] = room
 	return index
 
-func _build_depths(room_index: Dictionary, source_rooms: Array[Dictionary]) -> Dictionary:
+func _build_depths(room_index: Dictionary) -> Dictionary:
 	var depths: Dictionary = {}
 	var queue: Array[String] = []
 	depths[start_room_id] = 0
@@ -147,7 +147,7 @@ func _build_depths(room_index: Dictionary, source_rooms: Array[Dictionary]) -> D
 			depths[room_id] = max_depth
 	return depths
 
-func _layout_positions(room_index: Dictionary, depths: Dictionary, source_rooms: Array[Dictionary]) -> Dictionary:
+func _layout_positions(depths: Dictionary, source_rooms: Array[Dictionary]) -> Dictionary:
 	var depth_groups: Dictionary = {}
 	var max_depth: int = 0
 	var global_max_index: int = 0
@@ -163,9 +163,9 @@ func _layout_positions(room_index: Dictionary, depths: Dictionary, source_rooms:
 		if not depth_groups.has(depth):
 			depth_groups[depth] = []
 		depth_groups[depth].append(room_id)
-	var size: Vector2 = get_size()
+	var control_size: Vector2 = get_size()
 	var margin: float = 6.0
-	var usable_height: float = max(1.0, size.y - margin * 2.0)
+	var usable_height: float = max(1.0, control_size.y - margin * 2.0)
 	var depth_count: int = max(1, max_depth + 1)
 	var row_spacing: float = 0.0
 	if depth_count > 1:
@@ -253,8 +253,8 @@ func _draw_nodes(room_index: Dictionary, positions: Dictionary) -> void:
 		draw_string(font, text_pos, label, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, Color(0.1, 0.1, 0.1))
 
 func _node_radius() -> float:
-	var size: Vector2 = get_size()
-	return clamp(min(size.x, size.y) * 0.045, 10.0, 18.0)
+	var control_size: Vector2 = get_size()
+	return clamp(min(control_size.x, control_size.y) * 0.045, 10.0, 18.0)
 
 func _boss_label() -> String:
 	if boss_label == "":
@@ -271,13 +271,13 @@ func _resolve_next_ids(room: Dictionary) -> Array[String]:
 			resolved.append(String(entry))
 	return resolved
 
-func _array_to_set(values: Array) -> Dictionary:
-	var set: Dictionary = {}
+func _array_to_dict_set(values: Array) -> Dictionary:
+	var dict_set: Dictionary = {}
 	for value in values:
 		var key := String(value)
 		if key != "":
-			set[key] = true
-	return set
+			dict_set[key] = true
+	return dict_set
 
 func _room_visible(room_id: String) -> bool:
 	if visible_room_ids.is_empty():

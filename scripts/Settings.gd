@@ -69,8 +69,8 @@ func _apply_resolution(index: int) -> void:
 		return
 	if DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN:
 		window_mode.select(0)
-	var size: Vector2i = resolution_sizes[index]
-	App.set_graphics_settings(DisplayServer.WINDOW_MODE_WINDOWED, size)
+	var resolution_size: Vector2i = resolution_sizes[index]
+	App.set_graphics_settings(DisplayServer.WINDOW_MODE_WINDOWED, resolution_size)
 	_update_resolution_enabled()
 
 func _sync_resolution() -> void:
@@ -101,8 +101,8 @@ func _build_resolution_options() -> void:
 	resolution.clear()
 	display_resolution = DisplayServer.screen_get_size()
 	var items: Array = []
-	for size in RESOLUTIONS:
-		items.append({"size": size, "label": "%dx%d" % [size.x, size.y]})
+	for resolution_size in RESOLUTIONS:
+		items.append({"size": resolution_size, "label": "%dx%d" % [size.x, size.y]})
 	var has_display: bool = false
 	for item in items:
 		if item["size"] == display_resolution:

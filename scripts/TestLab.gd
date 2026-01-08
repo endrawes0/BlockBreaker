@@ -168,16 +168,16 @@ func _toggle_debug_panel() -> void:
 	debug_panel.visible = not debug_panel.visible
 	_update_toggle_button_text()
 
-func set_debug_panel_visible(visible: bool) -> void:
+func set_debug_panel_visible(visibility: bool) -> void:
 	if debug_panel == null:
 		return
-	debug_panel.visible = visible
+	debug_panel.visible = visibility
 	_update_toggle_button_text()
 
-func set_initial_debug_panel_visible(visible: bool) -> void:
-	initial_debug_panel_visible = visible
+func set_initial_debug_panel_visible(visibility: bool) -> void:
+	initial_debug_panel_visible = visibility
 	if is_node_ready():
-		set_debug_panel_visible(visible)
+		set_debug_panel_visible(visibility)
 
 func _update_toggle_button_text() -> void:
 	if toggle_button == null or debug_panel == null:
@@ -207,17 +207,17 @@ func _with_main(action: Callable) -> void:
 		return
 	action.call(main)
 
-func _apply_debug_font_size(size: int) -> void:
+func _apply_debug_font_size(font_size: int) -> void:
 	var root := get_node("DebugPanel") as Control
 	if root == null:
 		return
-	_apply_font_size_recursive(root, size)
+	_apply_font_size_recursive(root, font_size)
 
-func _apply_font_size_recursive(node: Node, size: int) -> void:
+func _apply_font_size_recursive(node: Node, font_size: int) -> void:
 	if node is Control:
-		(node as Control).add_theme_font_size_override("font_size", size)
+		(node as Control).add_theme_font_size_override("font_size", font_size)
 	for child in node.get_children():
-		_apply_font_size_recursive(child, size)
+		_apply_font_size_recursive(child, font_size)
 
 func _apply_debug_theme() -> void:
 	var panel := get_node("DebugPanel") as Control
