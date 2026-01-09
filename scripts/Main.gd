@@ -118,6 +118,7 @@ var test_lab_enabled: bool = false
 var test_lab_entry: bool = false
 var test_lab_panel: Control = null
 var state_manager: StateManager = StateManager.new()
+var _end_encounter_in_progress: bool = false
 
 var encounter_manager: EncounterManager
 var map_manager: MapManager
@@ -611,7 +612,7 @@ func _unhandled_input(event: InputEvent) -> void:
 func _process(delta: float) -> void:
 	if reserve_launch_cooldown > 0.0:
 		reserve_launch_cooldown = max(0.0, reserve_launch_cooldown - delta)
-	if state == GameState.GAME_OVER and encounter_manager and encounter_manager.check_victory():
+	if state == GameState.GAME_OVER and not _end_encounter_in_progress and encounter_manager and encounter_manager.check_victory():
 		_handle_gameover_victory()
 
 func _transition_event(event: String, context: Dictionary = {}) -> void:
@@ -1158,14 +1159,18 @@ func _on_ball_mod_consumed(mod_id: String) -> void:
 	_refresh_mod_buttons()
 
 func _end_encounter(win_event: String = "volley_win") -> void:
+	if _end_encounter_in_progress:
+		return
+	_end_encounter_in_progress = true
 	App.stop_combat_music()
 	_hide_all_panels()
 	_clear_active_balls()
 	_reset_deck_for_next_floor()
 	if current_is_boss:
 		if map_manager != null and map_manager.has_acts():
-			var act_index := map_manager.get_active_act_index()
+			var act_index: int = map_manager.get_active_act_index()
 			if map_manager.is_final_act():
+				_end_encounter_in_progress = false
 				_transition_event("victory")
 			else:
 				_spawn_act_complete_particles()
@@ -1174,14 +1179,17 @@ func _end_encounter(win_event: String = "volley_win") -> void:
 				if act_manager:
 					act_manager.refresh_limits()
 				_apply_act_limits()
+				_end_encounter_in_progress = false
 				_transition_event("advance_act")
 			return
 		else:
+			_end_encounter_in_progress = false
 			_transition_event("victory")
 		return
 	gold += _get_encounter_gold_reward()
 	if state == GameState.PLANNING:
 		await _play_planning_victory_message(_get_planning_victory_message())
+	_end_encounter_in_progress = false
 	_transition_event(win_event)
 
 func _get_planning_victory_message() -> String:
@@ -1261,6 +1269,16 @@ func _build_reward_buttons() -> void:
 func _on_reward_selected(card_id: String) -> void:
 	_add_card_to_deck(card_id)
 	_go_to_map()
+
+func test_lab_pass_level() -> void:
+	if _end_encounter_in_progress:
+		return
+	if bricks_root != null:
+		for child in bricks_root.get_children():
+			child.queue_free()
+	if state == GameState.GAME_OVER or state == GameState.VICTORY:
+		state_manager.transition_to(GameState.PLANNING, {"resume": true})
+	_end_encounter()
 
 func _show_shop() -> void:
 	App.stop_menu_music()

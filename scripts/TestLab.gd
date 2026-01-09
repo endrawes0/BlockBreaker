@@ -153,6 +153,9 @@ func _ready() -> void:
 	)
 	_connect_button("DebugPanel/VBox/ButtonColumns/RightColumn/PassLevel", func() -> void:
 		_with_main(func(main_node: Node) -> void:
+			if main_node.has_method("test_lab_pass_level"):
+				main_node.call("test_lab_pass_level")
+				return
 			for child in main_node.bricks_root.get_children():
 				child.queue_free()
 			main_node._end_encounter()
