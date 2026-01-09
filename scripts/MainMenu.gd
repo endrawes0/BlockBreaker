@@ -182,6 +182,13 @@ func _on_practice_act_selected(index: int) -> void:
 func _practice_layout_ids_for_selection() -> Array[String]:
 	if _practice_room_type == "boss":
 		return ["boss_act1", "boss_act2", "boss_act3"]
+	if _practice_room_type == "elite":
+		return [
+			"elite_ring_pylons",
+			"elite_split_fortress",
+			"elite_pinwheel",
+			"elite_donut"
+		]
 	return [
 		"grid",
 		"stagger",
@@ -199,6 +206,8 @@ func _layout_label(layout_id: String) -> String:
 	if layout_id.begins_with("boss_act"):
 		var suffix: String = layout_id.trim_prefix("boss_act")
 		return "Boss Act %s" % suffix
+	if layout_id.begins_with("elite_"):
+		return "Elite: %s" % layout_id.trim_prefix("elite_").replace("_", " ").capitalize()
 	return layout_id.replace("_", " ").capitalize()
 
 func _make_layout_preview(pattern_id: String, rows: int, cols: int, with_border: bool) -> Texture2D:
@@ -255,6 +264,8 @@ func _make_layout_preview(pattern_id: String, rows: int, cols: int, with_border:
 func _layout_preview_grid_size(layout_id: String) -> Vector2i:
 	if layout_id.begins_with("boss_act"):
 		return Vector2i(6, 10)
+	if layout_id.begins_with("elite_"):
+		return Vector2i(5, 9)
 	return Vector2i(4, 9)
 
 func _refresh_practice_layout_grid() -> void:
