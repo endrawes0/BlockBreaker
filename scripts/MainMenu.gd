@@ -116,6 +116,7 @@ func _end_run_or_practice() -> void:
 	if not App.has_run():
 		return
 	App.end_run_to_menu()
+	_update_continue_button()
 
 func _open_help() -> void:
 	App.show_help()
