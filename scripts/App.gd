@@ -107,7 +107,7 @@ func start_new_run(seed_value: int = 0) -> void:
 		run_instance.on_menu_closed()
 	_switch_to_scene(run_instance)
 
-func start_practice(room_type: String, act_index: int, layout_id: String) -> void:
+func start_practice(room_type: String, act_index: int, layout_id: String, floor_index: int = 1) -> void:
 	_menu_music_restart_after_run = false
 	stop_combat_music()
 	stop_rest_music()
@@ -118,10 +118,10 @@ func start_practice(room_type: String, act_index: int, layout_id: String) -> voi
 	if run_instance.has_method("set_test_lab_enabled"):
 		if _test_lab_unlocked:
 			run_instance.set_test_lab_enabled(true, false)
-		else:
-			run_instance.set_test_lab_enabled(false)
+	else:
+		run_instance.set_test_lab_enabled(false)
 	if run_instance.has_method("start_practice"):
-		run_instance.start_practice(room_type, act_index, layout_id)
+		run_instance.start_practice(room_type, act_index, layout_id, floor_index)
 	if run_instance.has_method("on_menu_closed"):
 		run_instance.on_menu_closed()
 	_switch_to_scene(run_instance)

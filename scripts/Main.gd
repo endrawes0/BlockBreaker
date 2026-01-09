@@ -174,6 +174,7 @@ var practice_mode: bool = false
 var _practice_room_type: String = "combat"
 var _practice_act_index: int = 1
 var _practice_layout_id: String = "grid"
+var _practice_floor_index: int = 1
 var _practice_pending: bool = false
 
 var max_energy: int = 3
@@ -339,10 +340,11 @@ func _ready() -> void:
 	if not _practice_pending:
 		_start_run()
 
-func start_practice(room_type: String, act_index: int, layout_id: String) -> void:
+func start_practice(room_type: String, act_index: int, layout_id: String, floor_index: int = 1) -> void:
 	_practice_room_type = room_type.strip_edges().to_lower()
 	_practice_act_index = max(1, act_index)
 	_practice_layout_id = layout_id.strip_edges()
+	_practice_floor_index = max(1, floor_index)
 	_practice_pending = true
 	if is_node_ready():
 		call_deferred("_start_practice_now")
@@ -352,7 +354,7 @@ func _start_practice_now() -> void:
 	practice_mode = true
 	hp = max_hp
 	gold = 0
-	floor_index = 1
+	floor_index = max(1, _practice_floor_index)
 	current_is_boss = false
 	current_is_elite = false
 	starting_hand_size = BASE_STARTING_HAND_SIZE
