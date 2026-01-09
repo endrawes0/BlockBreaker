@@ -27,7 +27,7 @@ fade_out = 2.0
 [sub_resource type="Resource" id="4"]
 script = ExtResource("2")
 stream = ExtResource("6")
-fade_in = 1.0
+fade_in = 0.5
 fade_out = 4.0
 
 [resource]

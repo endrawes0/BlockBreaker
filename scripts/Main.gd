@@ -28,6 +28,7 @@ const FLOOR_PLAN_GENERATOR := preload("res://scripts/data/FloorPlanGenerator.gd"
 const FLOOR_PLAN_GENERATOR_CONFIG := preload("res://scripts/data/FloorPlanGeneratorConfig.gd")
 const ACT_MANAGER_SCRIPT := preload("res://scripts/managers/ActManager.gd")
 const ACT_CONFIG_SCRIPT := preload("res://scripts/data/ActConfig.gd")
+const ACT_TRANSITION_MANAGER_SCRIPT := preload("res://scripts/managers/ActTransitionManager.gd")
 const CardEffectRegistry = preload("res://scripts/cards/CardEffectRegistry.gd")
 const BALANCE_DATA_PATH: String = "res://data/balance/basic.tres"
 const EMOJI_FONT_PATH: String = "res://assets/fonts/NotoColorEmoji.ttf"
@@ -89,6 +90,11 @@ const VICTORY_REVIVE_TOAST: String = "Resurrection: You pull yourself back from 
 @onready var shop_ball_mods_buttons: Container = $HUD/ShopPanel/ShopLayout/BallModsPanel/BallModsButtons
 @onready var shop_leave_button: Button = $HUD/ShopPanel/LeaveButton
 @onready var shop_gold_label: Label = $HUD/ShopPanel/ShopGoldLabel
+@onready var shop_label: Label = $HUD/ShopPanel/ShopLabel
+@onready var shop_info_label: Label = $HUD/ShopPanel/ShopInfoLabel
+@onready var shop_buffs_panel: Control = $HUD/ShopPanel/ShopLayout/BuffsPanel
+@onready var shop_ball_mods_panel: Control = $HUD/ShopPanel/ShopLayout/BallModsPanel
+@onready var shop_cards_panel: Control = $HUD/ShopPanel/ShopLayout/CardsPanel
 @onready var deck_panel: Panel = $HUD/DeckPanel
 @onready var deck_list: VBoxContainer = $HUD/DeckPanel/DeckScroll/DeckList
 @onready var deck_close_button: Button = $HUD/DeckPanel/DeckCloseButton
@@ -129,8 +135,11 @@ var deck_manager: DeckManager
 var hud_controller: HudController
 var reward_manager: RewardManager
 var shop_manager: ShopManager
+var act_transition_manager: ActTransitionManager
 var balance_data: Resource
 var card_effect_registry: CardEffectRegistry
+
+var _map_label_override_act_index: int = -1
 
 var card_data: Dictionary = {}
 var card_pool: Array[String] = []
@@ -309,6 +318,35 @@ func _ready() -> void:
 	add_child(shop_manager)
 	shop_manager.setup(hud_controller, shop_cards_buttons, shop_buffs_buttons, shop_ball_mods_buttons)
 	_configure_shop_manager()
+	act_transition_manager = ACT_TRANSITION_MANAGER_SCRIPT.new()
+	add_child(act_transition_manager)
+	act_transition_manager.setup(
+		self,
+		run_rng,
+		{
+			"hud": hud,
+			"treasure_panel": treasure_panel,
+			"treasure_label": treasure_label,
+			"treasure_rewards": treasure_rewards,
+			"treasure_continue_button": treasure_continue_button,
+			"map_panel": map_panel,
+			"map_graph": map_graph,
+			"map_label": map_label,
+			"shop_leave_button": shop_leave_button,
+			"shop_label": shop_label,
+			"shop_info_label": shop_info_label
+		},
+		{
+			"update_labels": Callable(self, "_update_labels"),
+			"hide_all_panels": Callable(self, "_hide_all_panels"),
+			"show_treasure_panel": Callable(self, "_show_treasure_panel"),
+			"show_single_panel": Callable(self, "_show_single_panel"),
+			"show_shop": Callable(self, "_show_shop"),
+			"transition_event": Callable(self, "_transition_event"),
+			"update_volley_prompt_visibility": Callable(self, "_update_volley_prompt_visibility"),
+			"clear_map_buttons": Callable(self, "_clear_map_buttons")
+		}
+	)
 	_set_test_lab_enabled(test_lab_enabled)
 	_apply_hud_theme()
 	App.bind_button_feedback(self)
@@ -328,9 +366,9 @@ func _ready() -> void:
 	if reward_skip_button:
 		reward_skip_button.pressed.connect(_go_to_map)
 	if treasure_continue_button:
-		treasure_continue_button.pressed.connect(_go_to_map)
+		treasure_continue_button.pressed.connect(_on_treasure_continue_pressed)
 	if shop_leave_button:
-		shop_leave_button.pressed.connect(_go_to_map)
+		shop_leave_button.pressed.connect(_on_shop_leave_pressed)
 	if mods_persist_checkbox:
 		mods_persist_checkbox.toggled.connect(func(pressed: bool) -> void:
 			persist_ball_mods = pressed
@@ -776,6 +814,10 @@ func _restart_run_same_seed() -> void:
 	_start_run("restart_run")
 
 func _show_map() -> void:
+	if act_transition_manager != null and act_transition_manager.has_pending():
+		if act_transition_manager.maybe_start_sequence():
+			return
+	_map_label_override_act_index = -1
 	App.stop_shop_music()
 	var rest_active: bool = App.is_rest_music_active()
 	if not rest_active:
@@ -801,9 +843,25 @@ func _update_map_label() -> void:
 	if map_label == null:
 		return
 	if map_manager != null and map_manager.has_acts():
-		map_label.text = "Act %d Map" % (map_manager.get_active_act_index() + 1)
+		var act_number: int = map_manager.get_active_act_index() + 1
+		var override_index: int = _map_label_override_act_index
+		if act_transition_manager != null:
+			override_index = max(override_index, act_transition_manager.map_label_override_act_index())
+		if override_index >= 0:
+			act_number = override_index + 1
+		map_label.text = "Act %d Map" % act_number
 	else:
 		map_label.text = "Map"
+
+func _on_treasure_continue_pressed() -> void:
+	if act_transition_manager != null and act_transition_manager.handle_treasure_continue():
+		return
+	_go_to_map()
+
+func _on_shop_leave_pressed() -> void:
+	if act_transition_manager != null and act_transition_manager.handle_shop_continue():
+		return
+	_go_to_map()
 
 func _show_map_preview() -> void:
 	if map_panel == null:
@@ -989,6 +1047,15 @@ func _update_map_graph(choices: Array[Dictionary]) -> void:
 			boss_label = String(act_config.boss_label)
 	plan["boss_label"] = boss_label
 	map_graph.call("set_plan", plan, choices)
+
+func _map_plan_with_boss_label(plan: Dictionary, act_index: int) -> Dictionary:
+	var merged: Dictionary = plan.duplicate(true)
+	var act_config: Resource = _load_act_config(act_index + 1)
+	var boss_label: String = ""
+	if act_config != null and act_config.has_method("get"):
+		boss_label = String(act_config.get("boss_label"))
+	merged["boss_label"] = boss_label
+	return merged
 
 func _enter_room(room_type: String) -> void:
 	if room_type == "mystery":
@@ -1243,10 +1310,18 @@ func _end_encounter(win_event: String = "volley_win") -> void:
 			else:
 				_spawn_act_complete_particles()
 				await _play_planning_victory_message("Well done! Act %d Complete!" % (act_index + 1))
+				var prev_plan: Dictionary = {}
+				var next_plan: Dictionary = {}
+				if map_manager != null:
+					prev_plan = _map_plan_with_boss_label(map_manager.get_active_plan_summary(), act_index)
 				map_manager.advance_act()
+				if map_manager != null:
+					next_plan = _map_plan_with_boss_label(map_manager.get_active_plan_summary(), map_manager.get_active_act_index())
 				if act_manager:
 					act_manager.refresh_limits()
 				_apply_act_limits()
+				if act_transition_manager != null:
+					act_transition_manager.queue_sequence(prev_plan, next_plan)
 				_end_encounter_in_progress = false
 				_transition_event("advance_act")
 			return
@@ -1407,6 +1482,21 @@ func _show_shop() -> void:
 	if not rest_active:
 		App.start_shop_music()
 	_show_single_panel(shop_panel)
+	if shop_label:
+		shop_label.text = "Shop"
+	if shop_info_label:
+		shop_info_label.text = "Spend gold on cards, buffs, and ball mods."
+	if shop_gold_label:
+		shop_gold_label.visible = true
+	if shop_cards_panel:
+		shop_cards_panel.visible = true
+	if shop_ball_mods_panel:
+		shop_ball_mods_panel.visible = true
+	if shop_buffs_panel:
+		shop_buffs_panel.visible = true
+	if shop_leave_button:
+		shop_leave_button.visible = true
+		shop_leave_button.text = "Leave"
 	info_label.text = ""
 	shop_discount_multiplier = 1.0
 	if shop_manager:
@@ -1649,8 +1739,9 @@ func _show_rest() -> void:
 	App.stop_shop_music()
 	App.start_rest_music()
 	_hide_all_panels()
-	info_label.text = "Rest to heal."
-	hp = min(max_hp, hp + 20)
+	info_label.text = "Rest: fully heal and remove wounds."
+	if act_transition_manager != null:
+		act_transition_manager.apply_rest_rewards()
 	_update_labels()
 	_transition_event("go_to_map")
 	_update_volley_prompt_visibility()
@@ -1938,7 +2029,8 @@ func on_menu_opened() -> void:
 			node.visible = false
 
 func on_menu_closed() -> void:
-	_transition_event("continue_run")
+	if state == GameState.MAIN_MENU:
+		_transition_event("continue_run")
 	for node in [paddle, bricks_root, playfield, hud]:
 		if node:
 			node.visible = true
