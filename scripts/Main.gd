@@ -866,7 +866,7 @@ func _between_act_buff_candidates() -> Array[Dictionary]:
 	options.append({
 		"id": "shop_discount",
 		"text": "Shop Discount (-%d%% prices)" % int(round(shop_discount_percent)),
-		"enabled": shop_discount_percent > 0.0 and (shop_discount_max <= 0 or shop_discount_multiplier > (1.0 - float(shop_discount_max) * (shop_discount_percent / 100.0)))
+		"enabled": shop_discount_percent > 0.0
 	})
 	options.append({
 		"id": "shop_scribe",
@@ -1601,6 +1601,21 @@ func _show_shop() -> void:
 	if not rest_active:
 		App.start_shop_music()
 	_show_single_panel(shop_panel)
+	if shop_label:
+		shop_label.text = "Shop"
+	if shop_info_label:
+		shop_info_label.text = "Spend gold on cards, buffs, and ball mods."
+	if shop_gold_label:
+		shop_gold_label.visible = true
+	if shop_cards_panel:
+		shop_cards_panel.visible = true
+	if shop_ball_mods_panel:
+		shop_ball_mods_panel.visible = true
+	if shop_buffs_panel:
+		shop_buffs_panel.visible = true
+	if shop_leave_button:
+		shop_leave_button.visible = true
+		shop_leave_button.text = "Leave"
 	info_label.text = ""
 	shop_discount_multiplier = 1.0
 	if shop_manager:
