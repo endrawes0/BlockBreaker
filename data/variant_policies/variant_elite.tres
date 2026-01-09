@@ -6,4 +6,4 @@
 script = ExtResource("1")
 shield_chance = 0.2
 regen_chance = 0.18
-curse_chance = 0.12
+curse_chance = 0.1
