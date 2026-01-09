@@ -127,10 +127,15 @@ func start_practice(room_type: String, act_index: int, layout_id: String) -> voi
 	_switch_to_scene(run_instance)
 
 func end_run_to_menu() -> void:
+	_menu_music_restart_after_run = false
+	stop_combat_music()
+	stop_shop_music()
+	stop_rest_music()
 	if run_instance and is_instance_valid(run_instance):
 		run_instance.queue_free()
 	run_instance = null
 	show_menu()
+	start_menu_music()
 
 func continue_run() -> void:
 	if not has_run():
