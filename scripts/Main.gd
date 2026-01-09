@@ -1,5 +1,7 @@
 extends Node2D
 
+signal toast_request_completed(token: int)
+
 const GameState = StateManager.GameState
 
 const CARD_TYPE_COLORS: Dictionary = {
@@ -1319,12 +1321,60 @@ func _animate_toast(toast_data: Dictionary) -> Tween:
 	)
 	return tween
 
-func _show_toast(message: String, tint: Color, hold_duration: float) -> void:
-	var toast_data := _create_toast(message, tint, hold_duration)
-	if toast_data.is_empty():
+const MAX_TOAST_QUEUE: int = 8
+var _toast_queue: Array[Dictionary] = []
+var _toast_runner_active: bool = false
+var _toast_next_token: int = 1
+
+func _enqueue_toast(message: String, tint: Color, hold_duration: float, token: int) -> void:
+	if message.strip_edges() == "":
+		toast_request_completed.emit(token)
 		return
-	var tween := _animate_toast(toast_data)
-	await tween.finished
+	if _toast_queue.size() >= MAX_TOAST_QUEUE:
+		var dropped: Dictionary = _toast_queue.pop_front()
+		if dropped.has("token"):
+			toast_request_completed.emit(int(dropped.get("token")))
+	_toast_queue.append({
+		"message": message,
+		"tint": tint,
+		"hold": hold_duration,
+		"token": token
+	})
+
+func _ensure_toast_runner() -> void:
+	if _toast_runner_active:
+		return
+	_toast_runner_active = true
+	call_deferred("_run_toast_queue")
+
+func _await_toast_token(token: int) -> void:
+	while true:
+		var completed = await toast_request_completed
+		var completed_token: int = completed if typeof(completed) == TYPE_INT else int(completed[0])
+		if completed_token == token:
+			return
+
+func _run_toast_queue() -> void:
+	while not _toast_queue.is_empty():
+		var entry: Dictionary = _toast_queue.pop_front()
+		var token: int = int(entry.get("token", 0))
+		var toast_data := _create_toast(
+			String(entry.get("message", "")),
+			entry.get("tint", Color(1, 1, 1, 1)),
+			float(entry.get("hold", 2.0))
+		)
+		if not toast_data.is_empty():
+			var tween := _animate_toast(toast_data)
+			await tween.finished
+		toast_request_completed.emit(token)
+	_toast_runner_active = false
+
+func _show_toast(message: String, tint: Color, hold_duration: float) -> void:
+	var token: int = _toast_next_token
+	_toast_next_token += 1
+	_enqueue_toast(message, tint, hold_duration, token)
+	_ensure_toast_runner()
+	await _await_toast_token(token)
 
 func _reset_deck_for_next_floor() -> void:
 	if deck_manager:
