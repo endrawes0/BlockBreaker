@@ -1281,7 +1281,8 @@ func _show_map_preview_from_plan(plan: Dictionary) -> void:
 	_update_seed_display()
 	map_preview_active = false
 	if map_graph != null and map_graph.has_method("set_plan"):
-		map_graph.call("set_plan", plan, [])
+		var no_choices: Array[Dictionary] = []
+		map_graph.call("set_plan", plan, no_choices)
 	_update_map_label()
 	_update_volley_prompt_visibility()
 
