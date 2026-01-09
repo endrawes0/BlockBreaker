@@ -141,6 +141,7 @@ var card_effect_registry: CardEffectRegistry
 
 var _between_act_step: int = BetweenActStep.NONE
 var _between_act_pending: bool = false
+var _fade_overlay: ColorRect = null
 
 var card_data: Dictionary = {}
 var card_pool: Array[String] = []
@@ -260,6 +261,7 @@ func _ready() -> void:
 	_apply_balance_data(balance_data)
 	base_max_energy = max_energy
 	outcome_rng.randomize()
+	_ensure_fade_overlay()
 	if get_viewport():
 		get_viewport().size_changed.connect(_fit_to_viewport)
 		_fit_to_viewport()
@@ -351,6 +353,35 @@ func _ready() -> void:
 	_set_hud_tooltips()
 	if not _practice_pending:
 		_start_run()
+
+func _ensure_fade_overlay() -> void:
+	if _fade_overlay != null:
+		return
+	if hud == null:
+		return
+	var overlay := ColorRect.new()
+	overlay.name = "FadeOverlay"
+	overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	overlay.color = Color(0.0, 0.0, 0.0, 1.0)
+	overlay.anchors_preset = Control.PRESET_FULL_RECT
+	overlay.visible = false
+	overlay.modulate = Color(1.0, 1.0, 1.0, 0.0)
+	hud.add_child(overlay)
+	overlay.z_index = 1000
+	_fade_overlay = overlay
+
+func _fade_overlay_to(alpha: float, duration: float) -> void:
+	_ensure_fade_overlay()
+	if _fade_overlay == null:
+		return
+	_fade_overlay.visible = true
+	var tween := create_tween()
+	tween.tween_property(_fade_overlay, "modulate:a", clamp(alpha, 0.0, 1.0), max(0.0, duration)) \
+		.set_trans(Tween.TRANS_QUAD) \
+		.set_ease(Tween.EASE_IN_OUT)
+	await tween.finished
+	if alpha <= 0.0 and _fade_overlay != null:
+		_fade_overlay.visible = false
 
 func start_practice(room_type: String, act_index: int, layout_id: String, floor_index: int = 1) -> void:
 	_practice_room_type = room_type.strip_edges().to_lower()
@@ -959,7 +990,37 @@ func _show_between_act_treasure() -> void:
 
 func _begin_between_act_rest() -> void:
 	_between_act_step = BetweenActStep.REST
-	_show_rest()
+	call_deferred("_run_between_act_rest")
+
+func _run_between_act_rest() -> void:
+	App.stop_menu_music()
+	App.stop_combat_music()
+	App.stop_shop_music()
+	App.start_rest_music()
+	_hide_all_panels()
+	info_label.text = ""
+	await _fade_overlay_to(1.0, 0.35)
+
+	_apply_rest_rewards()
+	_update_labels()
+
+	await get_tree().create_timer(1.0).timeout
+	await _fade_overlay_to(0.0, 0.35)
+	_begin_between_act_shop()
+
+func _apply_rest_rewards() -> void:
+	hp = max_hp
+	var removed: int = 0
+	if deck_manager != null:
+		var wound_instance_ids: Array[int] = []
+		for card in deck_manager.deck:
+			if card is Dictionary and String(card.get("card_id", "")) == "wound":
+				wound_instance_ids.append(int(card.get("id", -1)))
+		for instance_id in wound_instance_ids:
+			if removed >= 5:
+				break
+			deck_manager.remove_card_instance_from_all(instance_id, true)
+			removed += 1
 
 func _begin_between_act_shop() -> void:
 	_between_act_step = BetweenActStep.SHOP
@@ -1860,18 +1921,7 @@ func _show_rest() -> void:
 	App.start_rest_music()
 	_hide_all_panels()
 	info_label.text = "Rest: fully heal and remove wounds."
-	hp = max_hp
-	var removed: int = 0
-	if deck_manager != null:
-		var wound_instance_ids: Array[int] = []
-		for card in deck_manager.deck:
-			if card is Dictionary and String(card.get("card_id", "")) == "wound":
-				wound_instance_ids.append(int(card.get("id", -1)))
-		for instance_id in wound_instance_ids:
-			if removed >= 5:
-				break
-			deck_manager.remove_card_instance_from_all(instance_id, true)
-			removed += 1
+	_apply_rest_rewards()
 	_update_labels()
 	if _between_act_step == BetweenActStep.REST:
 		_begin_between_act_shop()
