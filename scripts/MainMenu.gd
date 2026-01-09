@@ -11,14 +11,11 @@ extends Control
 @onready var seed_status: Label = $SeedDialog/SeedDialogPanel/SeedStatus
 @onready var practice_dialog: ConfirmationDialog = $PracticeDialog
 @onready var practice_room_type_option: OptionButton = $PracticeDialog/PracticeDialogPanel/RoomTypeRow/RoomTypeOption
-@onready var practice_act_row: HBoxContainer = $PracticeDialog/PracticeDialogPanel/ActRow
-@onready var practice_act_option: OptionButton = $PracticeDialog/PracticeDialogPanel/ActRow/ActOption
 @onready var practice_layout_grid: GridContainer = $PracticeDialog/PracticeDialogPanel/LayoutRow/LayoutScroll/LayoutGrid
 
 var suppress_seed_validation: bool = false
 var test_lab_unlocked: bool = false
 var _practice_room_type: String = "combat"
-var _practice_act_index: int = 1
 var _practice_layout_id: String = "grid"
 var _layout_button_group: ButtonGroup = null
 var _pattern_registry: PatternRegistry = PatternRegistry.new()
@@ -145,14 +142,6 @@ func _setup_practice_dialog() -> void:
 		practice_room_type_option.add_item("Elite", 1)
 		practice_room_type_option.add_item("Boss", 2)
 		practice_room_type_option.item_selected.connect(_on_practice_room_type_selected)
-	if practice_act_option:
-		practice_act_option.clear()
-		practice_act_option.add_item("Act 1", 1)
-		practice_act_option.add_item("Act 2", 2)
-		practice_act_option.add_item("Act 3", 3)
-		practice_act_option.item_selected.connect(_on_practice_act_selected)
-		practice_act_option.select(0)
-		_practice_act_index = 1
 	_on_practice_room_type_selected(0)
 
 func _open_practice_dialog() -> void:
@@ -169,14 +158,6 @@ func _on_practice_room_type_selected(index: int) -> void:
 			_practice_room_type = "elite"
 		_:
 			_practice_room_type = "combat"
-	if practice_act_row:
-		practice_act_row.visible = _practice_room_type == "boss"
-	_refresh_practice_layout_grid()
-
-func _on_practice_act_selected(index: int) -> void:
-	if practice_act_option == null:
-		return
-	_practice_act_index = int(practice_act_option.get_item_id(index))
 	_refresh_practice_layout_grid()
 
 func _practice_layout_ids_for_selection() -> Array[String]:
@@ -320,9 +301,11 @@ func _start_practice() -> void:
 	if _practice_layout_id == "":
 		return
 	var room_type: String = _practice_room_type
-	var act_index: int = _practice_act_index
-	if room_type != "boss":
-		act_index = 1
+	var act_index: int = 1
+	if room_type == "boss" and _practice_layout_id.begins_with("boss_act"):
+		var act_suffix: String = _practice_layout_id.trim_prefix("boss_act")
+		var parsed: int = act_suffix.to_int()
+		act_index = clampi(parsed, 1, 3)
 	App.start_practice(room_type, act_index, _practice_layout_id)
 	if practice_dialog:
 		practice_dialog.hide()

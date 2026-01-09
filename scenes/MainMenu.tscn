@@ -105,19 +105,6 @@ text = "Room type"
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="ActRow" type="HBoxContainer" parent="PracticeDialog/PracticeDialogPanel"]
-layout_mode = 2
-theme_override_constants/separation = 10
-
-[node name="ActLabel" type="Label" parent="PracticeDialog/PracticeDialogPanel/ActRow"]
-layout_mode = 2
-size_flags_horizontal = 3
-text = "Act"
-
-[node name="ActOption" type="OptionButton" parent="PracticeDialog/PracticeDialogPanel/ActRow"]
-layout_mode = 2
-size_flags_horizontal = 3
-
 [node name="LayoutRow" type="VBoxContainer" parent="PracticeDialog/PracticeDialogPanel"]
 layout_mode = 2
 size_flags_vertical = 3
