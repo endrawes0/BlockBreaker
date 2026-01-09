@@ -9,9 +9,16 @@ extends Control
 @onready var seed_dialog: ConfirmationDialog = $SeedDialog
 @onready var seed_input: LineEdit = $SeedDialog/SeedDialogPanel/SeedInput
 @onready var seed_status: Label = $SeedDialog/SeedDialogPanel/SeedStatus
+@onready var practice_dialog: ConfirmationDialog = $PracticeDialog
+@onready var practice_room_type_option: OptionButton = $PracticeDialog/PracticeDialogPanel/RoomTypeRow/RoomTypeOption
+@onready var practice_act_row: HBoxContainer = $PracticeDialog/PracticeDialogPanel/ActRow
+@onready var practice_act_option: OptionButton = $PracticeDialog/PracticeDialogPanel/ActRow/ActOption
+@onready var practice_layout_option: OptionButton = $PracticeDialog/PracticeDialogPanel/LayoutRow/LayoutOption
 
 var suppress_seed_validation: bool = false
 var test_lab_unlocked: bool = false
+var _practice_room_type: String = "combat"
+var _practice_act_index: int = 1
 var _menu_palette: Array[Color] = [
 	Color(0.86, 0.32, 0.26),
 	Color(0.95, 0.60, 0.20),
@@ -23,7 +30,7 @@ var _menu_palette: Array[Color] = [
 
 func _ready() -> void:
 	start_button.pressed.connect(_open_seed_dialog)
-	continue_button.pressed.connect(_continue_run)
+	continue_button.pressed.connect(_continue_or_practice)
 	help_button.pressed.connect(_open_help)
 	settings_button.pressed.connect(_open_settings)
 	test_button.pressed.connect(_open_test_lab)
@@ -37,6 +44,7 @@ func _ready() -> void:
 			ok_button.pressed.connect(_start_game)
 	if seed_input:
 		seed_input.text_changed.connect(_on_seed_text_changed)
+	_setup_practice_dialog()
 	_lock_test_lab()
 	_apply_menu_palette()
 	_update_continue_button()
@@ -90,8 +98,11 @@ func _start_game() -> void:
 	if seed_dialog:
 		seed_dialog.hide()
 
-func _continue_run() -> void:
-	App.continue_run()
+func _continue_or_practice() -> void:
+	if App.has_run():
+		App.continue_run()
+		return
+	_open_practice_dialog()
 
 func _open_help() -> void:
 	App.show_help()
@@ -108,7 +119,97 @@ func _quit_game() -> void:
 func _update_continue_button() -> void:
 	if continue_button == null:
 		return
-	continue_button.disabled = not App.has_run()
+	if App.has_run():
+		continue_button.text = "Continue Run"
+		continue_button.disabled = false
+	else:
+		continue_button.text = "Practice"
+		continue_button.disabled = false
+	_apply_menu_palette()
+
+func _setup_practice_dialog() -> void:
+	if practice_dialog == null:
+		return
+	practice_dialog.dialog_hide_on_ok = false
+	practice_dialog.confirmed.connect(_start_practice)
+	var ok_button := practice_dialog.get_ok_button()
+	if ok_button:
+		ok_button.pressed.connect(_start_practice)
+	if practice_room_type_option:
+		practice_room_type_option.clear()
+		practice_room_type_option.add_item("Combat", 0)
+		practice_room_type_option.add_item("Elite", 1)
+		practice_room_type_option.add_item("Boss", 2)
+		practice_room_type_option.item_selected.connect(_on_practice_room_type_selected)
+	if practice_act_option:
+		practice_act_option.clear()
+		practice_act_option.add_item("Act 1", 1)
+		practice_act_option.add_item("Act 2", 2)
+		practice_act_option.add_item("Act 3", 3)
+		practice_act_option.item_selected.connect(_on_practice_act_selected)
+		practice_act_option.select(0)
+		_practice_act_index = 1
+	_on_practice_room_type_selected(0)
+
+func _open_practice_dialog() -> void:
+	if practice_dialog == null:
+		return
+	_refresh_practice_layout_options()
+	practice_dialog.popup_centered()
+
+func _on_practice_room_type_selected(index: int) -> void:
+	match index:
+		2:
+			_practice_room_type = "boss"
+		1:
+			_practice_room_type = "elite"
+		_:
+			_practice_room_type = "combat"
+	if practice_act_row:
+		practice_act_row.visible = _practice_room_type == "boss"
+	_refresh_practice_layout_options()
+
+func _on_practice_act_selected(index: int) -> void:
+	if practice_act_option == null:
+		return
+	_practice_act_index = int(practice_act_option.get_item_id(index))
+	_refresh_practice_layout_options()
+
+func _refresh_practice_layout_options() -> void:
+	if practice_layout_option == null:
+		return
+	practice_layout_option.clear()
+	var layouts: Array[String] = []
+	if _practice_room_type == "boss":
+		layouts = ["boss_act1", "boss_act2", "boss_act3"]
+	else:
+		layouts = [
+			"grid",
+			"stagger",
+			"pyramid",
+			"zigzag",
+			"ring",
+			"split_lanes",
+			"core",
+			"criss_cross",
+			"hollow_diamond",
+			"checker_gate"
+		]
+	for i in range(layouts.size()):
+		practice_layout_option.add_item(layouts[i], i)
+	practice_layout_option.select(0)
+
+func _start_practice() -> void:
+	if practice_layout_option == null:
+		return
+	var layout: String = practice_layout_option.get_item_text(practice_layout_option.selected)
+	var room_type: String = _practice_room_type
+	var act_index: int = _practice_act_index
+	if room_type != "boss":
+		act_index = 1
+	App.start_practice(room_type, act_index, layout)
+	if practice_dialog:
+		practice_dialog.hide()
 
 func _read_seed_input() -> Dictionary:
 	if seed_input == null:

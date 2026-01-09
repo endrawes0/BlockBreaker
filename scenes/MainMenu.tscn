@@ -78,6 +78,59 @@ size = Vector2i(350, 150)
 borderless = true
 ok_button_text = "Start"
 
+[node name="PracticeDialog" type="ConfirmationDialog" parent="."]
+title = "Practice"
+size = Vector2i(420, 240)
+borderless = true
+ok_button_text = "Start"
+cancel_button_text = "Cancel"
+
+[node name="PracticeDialogPanel" type="VBoxContainer" parent="PracticeDialog"]
+offset_left = 10.0
+offset_top = 10.0
+offset_right = 410.0
+offset_bottom = 190.0
+theme_override_constants/separation = 10
+
+[node name="RoomTypeRow" type="HBoxContainer" parent="PracticeDialog/PracticeDialogPanel"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="RoomTypeLabel" type="Label" parent="PracticeDialog/PracticeDialogPanel/RoomTypeRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Room type"
+
+[node name="RoomTypeOption" type="OptionButton" parent="PracticeDialog/PracticeDialogPanel/RoomTypeRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ActRow" type="HBoxContainer" parent="PracticeDialog/PracticeDialogPanel"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="ActLabel" type="Label" parent="PracticeDialog/PracticeDialogPanel/ActRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Act"
+
+[node name="ActOption" type="OptionButton" parent="PracticeDialog/PracticeDialogPanel/ActRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="LayoutRow" type="HBoxContainer" parent="PracticeDialog/PracticeDialogPanel"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="LayoutLabel" type="Label" parent="PracticeDialog/PracticeDialogPanel/LayoutRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Layout"
+
+[node name="LayoutOption" type="OptionButton" parent="PracticeDialog/PracticeDialogPanel/LayoutRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+
 [node name="SeedDialogPanel" type="VBoxContainer" parent="SeedDialog"]
 offset_left = 8.0
 offset_top = 8.0
