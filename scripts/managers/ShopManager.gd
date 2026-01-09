@@ -150,6 +150,7 @@ func build_shop_card_buttons() -> void:
 			if _call_can_afford(card_price):
 				_call_spend_gold(card_price)
 				_call_add_card(shop_card_id)
+				_remove_card_offer(shop_card_id)
 				_call_set_info("Purchased %s." % card_data[shop_card_id]["name"])
 				_call_update_labels()
 				card_button.queue_free()
@@ -439,6 +440,14 @@ func _roll_shop_card_offers(pick_card: Callable, offer_count: int) -> Array[Stri
 		if card_id != "":
 			offers.append(card_id)
 	return offers
+
+func _remove_card_offer(card_id: String) -> void:
+	if card_id == "" or card_offers.is_empty():
+		return
+	for i in range(card_offers.size()):
+		if card_offers[i] == card_id:
+			card_offers.remove_at(i)
+			return
 
 func _call_can_afford(price: int) -> bool:
 	if callbacks.has("can_afford") and callbacks.can_afford.is_valid():
