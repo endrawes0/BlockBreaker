@@ -287,7 +287,7 @@ func _apply_cell_variants(row: int, col: int, config: EncounterConfig, base_vari
 		var cluster_id: int = _boss_cluster_id_for_cell(pattern_id, row, col, config.cols)
 		if cluster_id >= 0:
 			variants["core_cluster_id"] = cluster_id
-			var is_core: bool = _is_boss_core_cell(pattern_id, row, col, config.rows, config.cols)
+			var is_core: bool = _is_boss_core_cell(pattern_id, row, col)
 			if is_core:
 				variants["is_armor_core"] = true
 				variants["core_locked"] = true
@@ -301,11 +301,7 @@ func _boss_cluster_id_for_cell(pattern_id: String, _row: int, col: int, cols: in
 			return 0
 	return -1
 
-func _is_boss_core_cell(pattern_id: String, row: int, col: int, rows: int, cols: int) -> bool:
-	@warning_ignore("unused_parameter")
-	var _unused_rows: int = rows
-	@warning_ignore("unused_parameter")
-	var _unused_cols: int = cols
+func _is_boss_core_cell(pattern_id: String, row: int, col: int) -> bool:
 	match pattern_id:
 		"boss_act1":
 			return false
