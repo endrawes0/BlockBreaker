@@ -290,13 +290,13 @@ func _apply_cell_variants(row: int, col: int, config: EncounterConfig, base_vari
 	var pattern_id := config.pattern_id
 	var variants := base_variants.duplicate()
 	if config.is_boss:
-			var cluster_id: int = _boss_cluster_id_for_cell(pattern_id, row, col, config.cols)
-			if cluster_id >= 0:
-				variants["core_cluster_id"] = cluster_id
-			var is_core: bool = _is_boss_core_cell(pattern_id, row, col, config.rows, config.cols)
-			if is_core:
-				variants["is_armor_core"] = true
-				variants["core_locked"] = true
+		var cluster_id: int = _boss_cluster_id_for_cell(pattern_id, row, col, config.cols)
+		if cluster_id >= 0:
+			variants["core_cluster_id"] = cluster_id
+		var is_core: bool = _is_boss_core_cell(pattern_id, row, col, config.rows, config.cols)
+		if is_core:
+			variants["is_armor_core"] = true
+			variants["core_locked"] = true
 	return variants
 
 func _boss_cluster_id_for_cell(pattern_id: String, _row: int, col: int, cols: int) -> int:
