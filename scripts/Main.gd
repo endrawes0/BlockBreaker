@@ -2448,21 +2448,6 @@ func _spawn_unlock_particle(parent_node: Node, card_rect: Rect2, color: Color, l
 			outcome_rng.randf_range(UNLOCK_PARTICLE_SPEED_Y.x, UNLOCK_PARTICLE_SPEED_Y.y)
 		)
 		particle.call("setup", color, velocity)
-		var particle := OUTCOME_PARTICLE_SCENE.instantiate()
-		if particle == null:
-			continue
-		parent_node.add_child(particle)
-		if particle is Node2D:
-			var node: Node2D = particle as Node2D
-			var angle: float = outcome_rng.randf_range(0.0, TAU)
-			var distance: float = outcome_rng.randf_range(0.0, radius)
-			node.global_position = center + Vector2(cos(angle), sin(angle)) * distance
-		if particle.has_method("setup"):
-			var velocity: Vector2 = Vector2(
-				outcome_rng.randf_range(UNLOCK_PARTICLE_SPEED_X.x, UNLOCK_PARTICLE_SPEED_X.y),
-				outcome_rng.randf_range(UNLOCK_PARTICLE_SPEED_Y.x, UNLOCK_PARTICLE_SPEED_Y.y)
-			)
-			particle.call("setup", color, velocity)
 
 func _apply_card_effect(card_id: String, instance_id: int) -> bool:
 	if card_effect_registry == null:
