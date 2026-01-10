@@ -536,6 +536,7 @@ func _apply_balance_data(data: Resource) -> void:
 		card_data = data.card_data
 		card_pool = _to_string_array(data.card_pool)
 		starting_deck = _to_string_array(data.starting_deck)
+	card_pool = App.filter_unlocked_cards(card_pool)
 	var mods: Dictionary = data.ball_mods
 	ball_mod_data = mods.get("data", {})
 	ball_mod_order = _to_string_array(mods.get("order", []))
@@ -2238,6 +2239,15 @@ func _play_card(instance_id: int) -> void:
 		return
 	energy -= cost
 	var should_discard: bool = _apply_card_effect(card_id, instance_id)
+	var newly_unlocked: Array[String] = App.record_card_played(card_id)
+	for unlocked_card_id in newly_unlocked:
+		if not card_pool.has(unlocked_card_id):
+			card_pool.append(unlocked_card_id)
+		var unlock_name: String = unlocked_card_id
+		if card_data.has(unlocked_card_id):
+			var unlock_card: Dictionary = card_data.get(unlocked_card_id, {})
+			unlock_name = String(unlock_card.get("name", unlocked_card_id))
+		_show_toast("%s unlocked!" % unlock_name, Color(1, 1, 1, 1), 2.0)
 	if should_discard:
 		deck_manager.discard_card_instance(instance_id)
 	_refresh_hand()
