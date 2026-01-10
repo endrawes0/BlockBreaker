@@ -42,6 +42,8 @@ const VOLLEY_PROMPT_OFFSET_Y: float = -70.0
 const START_PROMPT_EXTRA_OFFSET_Y: float = 40.0
 const VICTORY_REVIVE_HP_BONUS: int = 25
 const VICTORY_REVIVE_TOAST: String = "Resurrection: You pull yourself back from the brink of death! (+25 HP)"
+const CATCH_TOAST: String = "Nice catch!"
+const BOUNCE_CATCH_HEAL_AMOUNT: int = 25
 
 @export var brick_size: Vector2 = Vector2(64, 24)
 @export var brick_gap: Vector2 = Vector2(8, 8)
@@ -238,6 +240,8 @@ var volley_prompt_tween: Tween = null
 var volley_prompt_pulsing: bool = false
 
 var active_act_config: Resource
+var post_clear_catch_active: bool = false
+var pending_next_encounter_bonus_balls: int = 0
 
 func _init() -> void:
 	state_manager.state_changed.connect(_on_state_changed)
@@ -349,6 +353,8 @@ func _ready() -> void:
 	)
 	_set_test_lab_enabled(test_lab_enabled)
 	_apply_hud_theme()
+	if bricks_root != null:
+		bricks_root.child_entered_tree.connect(_on_bricks_root_child_entered_tree)
 	App.bind_button_feedback(self)
 	# Buttons removed; use Space to launch and cards/turn flow for control.
 	if restart_button:
@@ -782,7 +788,9 @@ func _start_run(event: String = "") -> void:
 	persist_ball_mods = false
 	if mods_persist_checkbox:
 		mods_persist_checkbox.button_pressed = false
-	active_balls.clear()
+	_clear_all_balls_for_new_layout()
+	post_clear_catch_active = false
+	pending_next_encounter_bonus_balls = 0
 	for child in bricks_root.get_children():
 		child.queue_free()
 	_generate_floor_plan_if_needed()
@@ -1098,6 +1106,8 @@ func _start_boss() -> void:
 
 func _begin_encounter(is_elite: bool, is_boss: bool) -> void:
 	_hide_all_panels()
+	_clear_all_balls_for_new_layout()
+	post_clear_catch_active = false
 	current_is_elite = is_elite
 	encounter_has_launched = false
 	App.stop_rest_music()
@@ -1119,7 +1129,6 @@ func _begin_encounter(is_elite: bool, is_boss: bool) -> void:
 		act_ball_speed_multiplier = 1.0
 		act_threat_multiplier = 1.0
 		info_label.text = "Boss fight. Plan carefully." if is_boss else "Plan your volley, then launch."
-	_clear_active_balls()
 	_reset_deck_for_next_floor()
 	current_is_boss = is_boss
 	var config := encounter_manager.build_config_from_floor(floor_index, is_elite, is_boss)
@@ -1144,6 +1153,9 @@ func _start_turn() -> void:
 	block = 0
 	volley_damage_bonus = 0
 	volley_ball_bonus = volley_ball_bonus_base
+	if not encounter_has_launched and pending_next_encounter_bonus_balls > 0:
+		volley_ball_bonus += pending_next_encounter_bonus_balls
+		pending_next_encounter_bonus_balls = 0
 	volley_ball_reserve = 0
 	parry_wound_active = false
 	riposte_wound_active = false
@@ -1196,6 +1208,7 @@ func _launch_reserve_ball() -> void:
 
 func _spawn_volley_ball() -> void:
 	var ball: CharacterBody2D = ball_scene.instantiate() as CharacterBody2D
+	ball.add_to_group("volley_balls")
 	ball.paddle_path = NodePath("../Paddle")
 	ball.damage = 1 + volley_damage_bonus
 	ball.piercing = volley_piercing
@@ -1225,6 +1238,8 @@ func _on_ball_lost(ball: Node) -> void:
 	active_balls.erase(ball)
 	if is_instance_valid(ball):
 		ball.queue_free()
+	if post_clear_catch_active:
+		return
 	encounter_manager.regen_bricks_on_drop()
 	if current_is_boss and encounter_manager:
 		encounter_manager.drop_bricks_one_row()
@@ -1238,11 +1253,60 @@ func _on_ball_lost(ball: Node) -> void:
 			return
 		_apply_volley_threat()
 
-func _on_ball_caught(_ball: Node) -> void:
-	if state != GameState.PLANNING:
+func _on_ball_caught(ball: Node) -> void:
+	if not post_clear_catch_active:
 		return
-	if encounter_manager and encounter_manager.check_victory():
-		await _play_planning_victory_message(_get_planning_victory_message())
+	_apply_catch_rewards(ball)
+
+func _apply_catch_rewards(ball: Node) -> void:
+	if ball == null:
+		return
+	var is_bounce_ball: bool = ball.is_in_group("bounce_balls")
+	active_balls.erase(ball)
+	if is_instance_valid(ball):
+		ball.queue_free()
+	_show_toast(CATCH_TOAST, Color(1.0, 0.9, 0.2, 1.0), 1.6)
+	if is_bounce_ball:
+		hp = min(max_hp, hp + BOUNCE_CATCH_HEAL_AMOUNT)
+		_update_labels()
+		_spawn_catch_heal_arrow()
+	else:
+		pending_next_encounter_bonus_balls += 1
+		_spawn_catch_volley_indicator()
+
+func _spawn_catch_heal_arrow() -> void:
+	_spawn_catch_flyout("⬆️", Color(0.25, 0.95, 0.35, 1.0))
+
+func _spawn_catch_volley_indicator() -> void:
+	_spawn_catch_flyout("●", Color(1.0, 1.0, 1.0, 1.0))
+
+func _spawn_catch_flyout(text: String, tint: Color) -> void:
+	if hud == null or paddle == null:
+		return
+	var container: Control = Control.new()
+	container.size = Vector2(80, 80)
+	container.global_position = paddle.global_position + Vector2(-40, -90)
+	container.pivot_offset = container.size * 0.5
+	container.scale = Vector2.ONE * 0.2
+	container.modulate = tint
+	hud.add_child(container)
+
+	var label: Label = Label.new()
+	label.text = text
+	label.add_theme_font_size_override("font_size", 38)
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	if card_emoji_font != null:
+		label.add_theme_font_override("font", card_emoji_font)
+	label.set_anchors_preset(Control.PRESET_FULL_RECT)
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	container.add_child(label)
+
+	var tween: Tween = create_tween()
+	tween.tween_property(container, "scale", Vector2.ONE * 1.35, 0.55).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.parallel().tween_property(container, "modulate:a", 0.0, 0.55).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_callback(container.queue_free)
 
 func _forfeit_volley() -> void:
 	if state != GameState.VOLLEY:
@@ -1295,7 +1359,7 @@ func _end_encounter(win_event: String = "volley_win") -> void:
 	_end_encounter_in_progress = true
 	App.stop_combat_music()
 	_hide_all_panels()
-	_clear_active_balls()
+	post_clear_catch_active = true
 	_reset_deck_for_next_floor()
 	if practice_mode:
 		_end_encounter_in_progress = false
@@ -2046,6 +2110,27 @@ func _clear_active_balls() -> void:
 	active_balls.clear()
 	volley_ball_reserve = 0
 	_update_reserve_indicator()
+
+func _clear_all_balls_for_new_layout() -> void:
+	if get_tree() == null:
+		_clear_active_balls()
+		return
+	var balls: Array[Node] = get_tree().get_nodes_in_group("balls")
+	for ball in balls:
+		if ball != null and is_instance_valid(ball):
+			ball.queue_free()
+	active_balls.clear()
+	volley_ball_reserve = 0
+	_update_reserve_indicator()
+
+func _on_bricks_root_child_entered_tree(node: Node) -> void:
+	if node == null:
+		return
+	if not node.is_in_group("bounce_balls"):
+		return
+	var on_caught: Callable = Callable(self, "_on_ball_caught")
+	if node.has_signal("caught") and not node.caught.is_connected(on_caught):
+		node.caught.connect(on_caught)
 
 func _on_brick_destroyed(_brick: Node) -> void:
 	_update_labels()
