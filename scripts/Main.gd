@@ -149,6 +149,9 @@ var _map_label_override_act_index: int = -1
 var card_data: Dictionary = {}
 var card_pool: Array[String] = []
 var starting_deck: Array[String] = []
+var _hand_interaction_locked: bool = false
+var _unlock_reward_queue: Array[String] = []
+var _unlock_sequence_active: bool = false
 var ball_mod_data: Dictionary = {}
 var ball_mod_order: Array[String] = []
 var ball_mod_colors: Dictionary = {}
@@ -2222,9 +2225,11 @@ func _discard_hand() -> void:
 	_refresh_hand()
 
 func _refresh_hand() -> void:
-	hud_controller.refresh_hand(deck_manager.hand, state != GameState.PLANNING, Callable(self, "_play_card"))
+	hud_controller.refresh_hand(deck_manager.hand, _hand_interaction_locked or state != GameState.PLANNING, Callable(self, "_play_card"))
 
 func _play_card(instance_id: int) -> void:
+	if _hand_interaction_locked or _unlock_sequence_active:
+		return
 	if state != GameState.PLANNING:
 		return
 	var card_id: String = deck_manager.get_card_id_from_hand(instance_id)
@@ -2240,19 +2245,152 @@ func _play_card(instance_id: int) -> void:
 	energy -= cost
 	var should_discard: bool = _apply_card_effect(card_id, instance_id)
 	var newly_unlocked: Array[String] = App.record_card_played(card_id)
-	for unlocked_card_id in newly_unlocked:
-		if not card_pool.has(unlocked_card_id):
-			card_pool.append(unlocked_card_id)
-		var unlock_name: String = unlocked_card_id
-		if card_data.has(unlocked_card_id):
-			var unlock_card: Dictionary = card_data.get(unlocked_card_id, {})
-			unlock_name = String(unlock_card.get("name", unlocked_card_id))
-		_show_toast("%s unlocked!" % unlock_name, Color(1, 1, 1, 1), 2.0)
+	if not newly_unlocked.is_empty():
+		_enqueue_unlock_rewards(newly_unlocked)
 	if should_discard:
 		deck_manager.discard_card_instance(instance_id)
 	_refresh_hand()
 	_update_reserve_indicator()
 	_update_labels()
+
+func _enqueue_unlock_rewards(card_ids: Array[String]) -> void:
+	for card_id in card_ids:
+		var id: String = String(card_id)
+		if id.is_empty():
+			continue
+		_unlock_reward_queue.append(id)
+	if _unlock_sequence_active:
+		return
+	_unlock_sequence_active = true
+	_hand_interaction_locked = true
+	_refresh_hand()
+	_run_unlock_reward_queue()
+
+func _run_unlock_reward_queue() -> void:
+	while not _unlock_reward_queue.is_empty():
+		var unlock_id: String = String(_unlock_reward_queue.pop_front())
+		if unlock_id.is_empty():
+			continue
+		if not card_pool.has(unlock_id):
+			card_pool.append(unlock_id)
+		await _show_unlock_reveal_and_gift(unlock_id)
+	_unlock_sequence_active = false
+	_hand_interaction_locked = false
+	_set_hand_buttons_disabled(state != GameState.PLANNING)
+
+func _show_unlock_reveal_and_gift(card_id: String) -> void:
+	if hud == null or hud_controller == null:
+		return
+	var card: Dictionary = card_data.get(card_id, {})
+	var card_name: String = String(card.get("name", card_id))
+
+	var overlay: Control = Control.new()
+	overlay.name = "CardUnlockOverlay"
+	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	overlay.focus_mode = Control.FOCUS_ALL
+	hud.add_child(overlay)
+
+	var backdrop: ColorRect = ColorRect.new()
+	backdrop.name = "Backdrop"
+	backdrop.set_anchors_preset(Control.PRESET_FULL_RECT)
+	backdrop.color = Color(0, 0, 0, 0.0)
+	backdrop.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	overlay.add_child(backdrop)
+
+	var header: Label = Label.new()
+	header.name = "Header"
+	header.text = "New card unlocked!"
+	header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	header.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	header.add_theme_font_size_override("font_size", 22)
+	header.set_anchors_preset(Control.PRESET_TOP_WIDE)
+	header.offset_top = 80.0
+	header.offset_bottom = 120.0
+	header.modulate = Color(1, 1, 1, 0)
+	header.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	overlay.add_child(header)
+
+	var mover: Control = Control.new()
+	mover.name = "CardMover"
+	mover.size = CARD_BUTTON_SIZE
+	mover.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	mover.modulate = Color(1, 1, 1, 0)
+	mover.pivot_offset = mover.size * 0.5
+	overlay.add_child(mover)
+
+	var card_button: Button = hud_controller.create_card_button(card_id)
+	card_button.disabled = true
+	card_button.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	card_button.set_anchors_preset(Control.PRESET_FULL_RECT)
+	mover.add_child(card_button)
+
+	var viewport_rect: Rect2 = get_viewport().get_visible_rect()
+	var start_pos: Vector2 = viewport_rect.position + (viewport_rect.size * 0.5) - (mover.size * 0.5)
+	mover.global_position = start_pos
+	mover.scale = Vector2.ONE * 0.6
+
+	var intro: Tween = create_tween()
+	intro.set_trans(Tween.TRANS_BACK)
+	intro.set_ease(Tween.EASE_OUT)
+	intro.tween_property(backdrop, "color", Color(0, 0, 0, 0.55), 0.18)
+	intro.parallel().tween_property(header, "modulate", Color(1, 1, 1, 1), 0.12)
+	intro.parallel().tween_property(mover, "modulate", Color(1, 1, 1, 1), 0.12)
+	intro.parallel().tween_property(mover, "scale", Vector2.ONE, 0.28)
+	intro.parallel().tween_property(mover, "rotation_degrees", -3.0, 0.28)
+	await intro.finished
+
+	header.text = "%s unlocked!" % card_name
+	await get_tree().create_timer(0.55).timeout
+
+	var new_instance_id: int = -1
+	if deck_manager != null:
+		new_instance_id = deck_manager.add_card_to_hand_with_instance_id(card_id, true)
+	_refresh_hand()
+	await get_tree().process_frame
+
+	var target_button: Button = _find_hand_button_by_instance_id(new_instance_id)
+	var target_pos: Vector2 = start_pos
+	if target_button != null:
+		target_pos = target_button.get_global_rect().position
+		target_button.modulate = Color(1, 1, 1, 0)
+		target_button.scale = Vector2.ONE * 0.92
+
+	var outro: Tween = create_tween()
+	outro.set_trans(Tween.TRANS_QUAD)
+	outro.set_ease(Tween.EASE_IN_OUT)
+	outro.tween_property(mover, "global_position", target_pos, 0.34)
+	outro.parallel().tween_property(mover, "scale", Vector2.ONE * 0.78, 0.34)
+	outro.parallel().tween_property(mover, "rotation_degrees", 0.0, 0.34)
+	outro.parallel().tween_property(backdrop, "color", Color(0, 0, 0, 0.0), 0.28)
+	outro.parallel().tween_property(header, "modulate", Color(1, 1, 1, 0), 0.18)
+	await outro.finished
+
+	if target_button != null:
+		target_button.modulate = Color(1, 1, 1, 1)
+		var pop: Tween = target_button.create_tween()
+		pop.set_trans(Tween.TRANS_BACK)
+		pop.set_ease(Tween.EASE_OUT)
+		pop.tween_property(target_button, "scale", Vector2.ONE, 0.22)
+
+	overlay.queue_free()
+
+func _find_hand_button_by_instance_id(instance_id: int) -> Button:
+	if instance_id < 0 or hand_container == null:
+		return null
+	for child in hand_container.get_children():
+		if child is Button:
+			var button: Button = child as Button
+			if button.has_meta("instance_id") and int(button.get_meta("instance_id")) == instance_id:
+				return button
+	return null
+
+func _set_hand_buttons_disabled(disabled: bool) -> void:
+	if hand_container == null:
+		return
+	for child in hand_container.get_children():
+		if child is BaseButton:
+			(child as BaseButton).disabled = disabled
 
 func _apply_card_effect(card_id: String, instance_id: int) -> bool:
 	if card_effect_registry == null:
