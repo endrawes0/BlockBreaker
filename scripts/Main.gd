@@ -44,6 +44,9 @@ const VICTORY_REVIVE_HP_BONUS: int = 25
 const VICTORY_REVIVE_TOAST: String = "Resurrection: You pull yourself back from the brink of death! (+25 HP)"
 const CATCH_TOAST: String = "Nice catch!"
 const BOUNCE_CATCH_HEAL_AMOUNT: int = 25
+const CATCH_PARTICLE_COUNT: int = 12
+const CATCH_PARTICLE_SPEED_X: Vector2 = Vector2(-160.0, 160.0)
+const CATCH_PARTICLE_SPEED_Y: Vector2 = Vector2(-260.0, 60.0)
 
 @export var brick_size: Vector2 = Vector2(64, 24)
 @export var brick_gap: Vector2 = Vector2(8, 8)
@@ -1262,9 +1265,23 @@ func _apply_catch_rewards(ball: Node) -> void:
 	if ball == null:
 		return
 	var is_bounce_ball: bool = ball.is_in_group("bounce_balls")
+	var catch_pos: Vector2 = Vector2.ZERO
+	var ball_color: Color = Color(1, 1, 1, 1)
+	if ball is Node2D:
+		catch_pos = (ball as Node2D).global_position
+	if ball is Node:
+		var rect_node: ColorRect = (ball as Node).get_node_or_null("Rect") as ColorRect
+		if rect_node != null:
+			ball_color = rect_node.color
+		elif ball.has_method("get"):
+			var rect_value: Variant = ball.get("rect")
+			if rect_value is ColorRect and rect_value != null:
+				ball_color = (rect_value as ColorRect).color
+	ball_color.a = 1.0
 	active_balls.erase(ball)
 	if is_instance_valid(ball):
 		ball.queue_free()
+	_spawn_catch_particles(catch_pos, ball_color)
 	_show_toast(CATCH_TOAST, Color(1.0, 0.9, 0.2, 1.0), 1.6)
 	if is_bounce_ball:
 		hp = min(max_hp, hp + BOUNCE_CATCH_HEAL_AMOUNT)
@@ -1307,6 +1324,34 @@ func _spawn_catch_flyout(text: String, tint: Color) -> void:
 	tween.tween_property(container, "scale", Vector2.ONE * 1.35, 0.55).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	tween.parallel().tween_property(container, "modulate:a", 0.0, 0.55).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	tween.tween_callback(container.queue_free)
+
+func _spawn_catch_particles(center: Vector2, color: Color) -> void:
+	if not App.get_vfx_enabled():
+		return
+	var count: int = App.get_vfx_count(CATCH_PARTICLE_COUNT)
+	if count <= 0:
+		return
+	var parent_node: Node = get_tree().root
+	if hud != null:
+		parent_node = hud
+	if parent_node == null:
+		return
+	for _i in range(count):
+		var particle := OUTCOME_PARTICLE_SCENE.instantiate()
+		if particle == null:
+			continue
+		parent_node.add_child(particle)
+		if particle is Node2D:
+			var node := particle as Node2D
+			var angle: float = outcome_rng.randf_range(0.0, TAU)
+			var distance: float = outcome_rng.randf_range(0.0, 14.0)
+			node.global_position = center + Vector2(cos(angle), sin(angle)) * distance
+		if particle.has_method("setup"):
+			var velocity := Vector2(
+				outcome_rng.randf_range(CATCH_PARTICLE_SPEED_X.x, CATCH_PARTICLE_SPEED_X.y),
+				outcome_rng.randf_range(CATCH_PARTICLE_SPEED_Y.x, CATCH_PARTICLE_SPEED_Y.y)
+			)
+			particle.call("setup", color, velocity)
 
 func _forfeit_volley() -> void:
 	if state != GameState.VOLLEY:
