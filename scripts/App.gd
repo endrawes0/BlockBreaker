@@ -49,6 +49,11 @@ const CARD_UNLOCK_REQUIREMENTS: Dictionary = {
 		"type": "use_card",
 		"card_id": "parry",
 		"count": 10
+	},
+	"what_doesnt_kill_us": {
+		"type": "use_card",
+		"card_id": "wound",
+		"count": 10
 	}
 }
 
