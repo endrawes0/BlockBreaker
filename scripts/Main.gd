@@ -297,81 +297,81 @@ func _ready() -> void:
 		add_child(hud_controller)
 		card_emoji_font = load(EMOJI_FONT_PATH)
 		hud_controller.setup({
-		"energy_label": energy_label,
-		"deck_label": deck_label,
-		"discard_label": discard_label,
-		"deck_button": deck_button,
-		"discard_button": discard_button,
-		"hp_label": hp_label,
-		"gold_label": gold_label,
-		"shop_gold_label": shop_gold_label,
-		"threat_label": threat_label,
-		"floor_label": floor_label,
-		"map_panel": map_panel,
-		"reward_panel": reward_panel,
-		"treasure_panel": treasure_panel,
-		"shop_panel": shop_panel,
-		"deck_panel": deck_panel,
-		"gameover_panel": gameover_panel,
-		"hand_container": hand_container
-	}, card_data, CARD_TYPE_COLORS, CARD_BUTTON_SIZE, card_emoji_font)
-			unlock_manager = App.get_unlock_manager()
-			if unlock_manager != null:
-				unlock_manager.call(
-					"bind_run_context",
-					hud,
-					hud_controller,
-					deck_manager,
-					hand_container,
-					card_data,
+			"energy_label": energy_label,
+			"deck_label": deck_label,
+			"discard_label": discard_label,
+			"deck_button": deck_button,
+			"discard_button": discard_button,
+			"hp_label": hp_label,
+			"gold_label": gold_label,
+			"shop_gold_label": shop_gold_label,
+			"threat_label": threat_label,
+			"floor_label": floor_label,
+			"map_panel": map_panel,
+			"reward_panel": reward_panel,
+			"treasure_panel": treasure_panel,
+			"shop_panel": shop_panel,
+			"deck_panel": deck_panel,
+			"gameover_panel": gameover_panel,
+			"hand_container": hand_container
+		}, card_data, CARD_TYPE_COLORS, CARD_BUTTON_SIZE, card_emoji_font)
+		unlock_manager = App.get_unlock_manager()
+		if unlock_manager != null:
+			unlock_manager.call(
+				"bind_run_context",
+				hud,
+				hud_controller,
+				deck_manager,
+				hand_container,
+				card_data,
 				card_pool,
 				CARD_TYPE_COLORS,
 				CARD_BUTTON_SIZE,
 				OUTCOME_PARTICLE_SCENE,
-					outcome_rng,
-					Callable(self, "_refresh_hand"),
-					Callable(self, "_is_planning_state")
-				)
-	reward_manager = RewardManager.new()
-	add_child(reward_manager)
-	reward_manager.setup(hud_controller, reward_buttons)
-	reward_manager.set_on_selected(Callable(self, "_on_reward_selected"))
-	reward_manager.set_panel_nodes(reward_label, reward_skip_button)
-	reward_manager.set_info_callback(Callable(self, "_set_info_text"))
-	reward_manager.configure({"reward_count": reward_card_count})
-	shop_manager = ShopManager.new()
-	add_child(shop_manager)
-	shop_manager.setup(hud_controller, shop_cards_buttons, shop_buffs_buttons, shop_ball_mods_buttons)
-	_configure_shop_manager()
-	act_transition_manager = ACT_TRANSITION_MANAGER_SCRIPT.new()
-	add_child(act_transition_manager)
-	act_transition_manager.setup(
-		self,
-		run_rng,
-		{
-			"hud": hud,
-			"treasure_panel": treasure_panel,
-			"treasure_label": treasure_label,
-			"treasure_rewards": treasure_rewards,
-			"treasure_continue_button": treasure_continue_button,
-			"map_panel": map_panel,
-			"map_graph": map_graph,
-			"map_label": map_label,
-			"shop_leave_button": shop_leave_button,
-			"shop_label": shop_label,
-			"shop_info_label": shop_info_label
-		},
-		{
-			"update_labels": Callable(self, "_update_labels"),
-			"hide_all_panels": Callable(self, "_hide_all_panels"),
-			"show_treasure_panel": Callable(self, "_show_treasure_panel"),
-			"show_single_panel": Callable(self, "_show_single_panel"),
-			"show_shop": Callable(self, "_show_shop"),
-			"transition_event": Callable(self, "_transition_event"),
-			"update_volley_prompt_visibility": Callable(self, "_update_volley_prompt_visibility"),
-			"clear_map_buttons": Callable(self, "_clear_map_buttons")
-		}
-	)
+				outcome_rng,
+				Callable(self, "_refresh_hand"),
+				Callable(self, "_is_planning_state")
+			)
+		reward_manager = RewardManager.new()
+		add_child(reward_manager)
+		reward_manager.setup(hud_controller, reward_buttons)
+		reward_manager.set_on_selected(Callable(self, "_on_reward_selected"))
+		reward_manager.set_panel_nodes(reward_label, reward_skip_button)
+		reward_manager.set_info_callback(Callable(self, "_set_info_text"))
+		reward_manager.configure({"reward_count": reward_card_count})
+		shop_manager = ShopManager.new()
+		add_child(shop_manager)
+		shop_manager.setup(hud_controller, shop_cards_buttons, shop_buffs_buttons, shop_ball_mods_buttons)
+		_configure_shop_manager()
+		act_transition_manager = ACT_TRANSITION_MANAGER_SCRIPT.new()
+		add_child(act_transition_manager)
+		act_transition_manager.setup(
+			self,
+			run_rng,
+			{
+				"hud": hud,
+				"treasure_panel": treasure_panel,
+				"treasure_label": treasure_label,
+				"treasure_rewards": treasure_rewards,
+				"treasure_continue_button": treasure_continue_button,
+				"map_panel": map_panel,
+				"map_graph": map_graph,
+				"map_label": map_label,
+				"shop_leave_button": shop_leave_button,
+				"shop_label": shop_label,
+				"shop_info_label": shop_info_label
+			},
+			{
+				"update_labels": Callable(self, "_update_labels"),
+				"hide_all_panels": Callable(self, "_hide_all_panels"),
+				"show_treasure_panel": Callable(self, "_show_treasure_panel"),
+				"show_single_panel": Callable(self, "_show_single_panel"),
+				"show_shop": Callable(self, "_show_shop"),
+				"transition_event": Callable(self, "_transition_event"),
+				"update_volley_prompt_visibility": Callable(self, "_update_volley_prompt_visibility"),
+				"clear_map_buttons": Callable(self, "_clear_map_buttons")
+			}
+		)
 	_set_test_lab_enabled(test_lab_enabled)
 	_apply_hud_theme()
 	if bricks_root != null:
