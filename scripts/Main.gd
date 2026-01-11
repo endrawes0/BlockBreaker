@@ -313,7 +313,7 @@ func _ready() -> void:
 			"shop_panel": shop_panel,
 			"deck_panel": deck_panel,
 			"gameover_panel": gameover_panel,
-			"hand_container": hand_container
+			"hand_container": hand_container,
 		}, card_data, CARD_TYPE_COLORS, CARD_BUTTON_SIZE, card_emoji_font)
 		unlock_manager = App.get_unlock_manager()
 		if unlock_manager != null:
