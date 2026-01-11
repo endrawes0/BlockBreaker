@@ -1268,6 +1268,10 @@ func _on_ball_lost(ball: Node) -> void:
 	if is_instance_valid(ball):
 		ball.queue_free()
 	if post_clear_catch_active:
+		if active_balls.is_empty() and not _is_persist_enabled():
+			active_ball_mod = ""
+			_apply_ball_mod_to_active_balls()
+			_refresh_mod_buttons()
 		return
 	encounter_manager.regen_bricks_on_drop()
 	if current_is_boss and encounter_manager:
